@@ -30,6 +30,8 @@ La arquitectura debe permitir agregar posteriormente otros tipos de negocios, po
 - Profesionales independientes
 - Otros pequeños comercios
 
+
+
 ## 3. Objetivo del MVP
 
 El MVP debe permitir que un propietario:
@@ -44,6 +46,8 @@ El MVP debe permitir que un propietario:
 8. Registre gastos.
 9. Consulte el estado básico de su caja.
 10. Consulte estadísticas básicas.
+
+
 
 ## 4. Funciones futuras
 
@@ -61,6 +65,8 @@ Estas funciones NO forman parte del primer MVP, pero la arquitectura debe permit
 - Automatizaciones.
 - Notificaciones.
 - Funciones específicas según el tipo de negocio.
+
+
 
 ## 5. Stack tecnológico
 
@@ -86,6 +92,8 @@ IDE principal:
 
 - Cursor
 
+
+
 ## 6. Arquitectura
 
 La aplicación debe diseñarse como un sistema multi-negocio (multi-tenant).
@@ -104,6 +112,8 @@ Entidades iniciales previstas:
 - sales
 - expenses
 
+
+
 ## 7. Principios de desarrollo
 
 1. Mantener la arquitectura simple.
@@ -116,6 +126,8 @@ Entidades iniciales previstas:
 8. Validar los cambios importantes antes de continuar.
 9. No modificar archivos sin comprender su propósito.
 10. Mantener el código preparado para futuras funcionalidades sin implementarlas prematuramente.
+
+
 
 ## 8. IA
 
@@ -172,3 +184,55 @@ Antes de realizar cambios importantes:
 7. Ejecutar las verificaciones disponibles después de cambios importantes.
 
 Este archivo es la referencia principal del proyecto.
+
+
+
+
+
+## Estado actual — 2026-09-22
+
+### Firebase
+
+- Firebase está conectado al proyecto Flutter.
+
+- Firebase Authentication funciona con email/contraseña.
+
+- Firestore está configurado y funcionando.
+
+- El usuario puede registrarse e iniciar sesión.
+
+- Al crear una cuenta sin negocio asociado, se muestra `BusinessSetupScreen`.
+
+- Al crear el negocio se genera:
+
+  - `businesses/{businessId}`
+
+  - `users/{uid}` con el campo `businessId`.
+
+### Flujo actual
+
+```text
+
+Login / Registro
+
+      ↓
+
+AppRouter
+
+      ↓
+
+¿El usuario tiene businessId?
+
+   ├── NO → BusinessSetupScreen
+
+   │          ↓
+
+   │       Crear negocio
+
+   │
+
+   └── SÍ → BusinessHomeScreen
+
+                ↓
+
+             Categorías
