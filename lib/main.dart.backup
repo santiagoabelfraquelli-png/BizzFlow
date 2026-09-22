@@ -4,7 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import 'firebase_options.dart';
-import 'package:bizzflow/screens/business_setup_screen.dart';
+import 'screens/business_setup_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -99,7 +99,6 @@ class AppRouter extends StatelessWidget {
                     businessData?['name']?.toString() ?? 'Mi negocio';
 
                 return BusinessHomeScreen(
-                  businessId: businessId.toString(),
                   businessName: businessName,
                 );
               },
@@ -265,4 +264,3 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 }
-
