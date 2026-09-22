@@ -77,7 +77,7 @@ El flujo actual del MVP es:
 
 Todos estos módulos están actualmente implementados, integrados y probados.
 
-El siguiente paso no es agregar otro módulo grande inmediatamente, sino mantener una versión estable del MVP y evaluar posteriormente mejoras o una prueba con un negocio real.
+El MVP se encuentra actualmente en una etapa de **mejora visual y UX**, manteniendo la lógica de negocio existente.
 
 ---
 
@@ -492,9 +492,37 @@ Se crearon los siguientes índices compuestos:
 * `businessId` Ascending
 * `date` Ascending
 
+### Rediseño visual
+
+El Dashboard fue rediseñado visualmente manteniendo la lógica y las consultas existentes.
+
+El nuevo diseño incluye:
+
+* Encabezado visual del Dashboard
+* Tarjetas de métricas
+* Iconos
+* Colores diferenciados por tipo de información
+* Tarjetas de stock
+* Diseño responsive
+* Bordes redondeados
+* Sombras
+* Animaciones y transiciones visuales
+* Adaptación del número de columnas según el ancho disponible
+
+La estructura visual fue simplificada para evitar complejidad innecesaria y mantener el código estable.
+
+### Validación
+
+El rediseño fue validado mediante:
+
+* `flutter analyze`
+* Ejecución en Chrome
+* Comprobación visual
+* Comprobación de los valores existentes
+
 Estado:
 
-**Funcional y probado.**
+**Funcional, probado y visualmente rediseñado.**
 
 Se comprobó mediante una prueba integrada que:
 
@@ -535,6 +563,26 @@ Actualmente el panel contiene:
 
 Cada módulo recibe el `businessId` correspondiente.
 
+### Rediseño visual
+
+El `BusinessHomeScreen` fue rediseñado visualmente manteniendo la lógica de navegación y el `businessId`.
+
+El nuevo diseño incluye:
+
+* Encabezado de bienvenida
+* Diseño basado en tarjetas
+* Iconos para cada módulo
+* Colores diferenciados por módulo
+* Bordes redondeados
+* Sombras
+* Animaciones de entrada
+* Efectos visuales al pasar el mouse
+* Escalado y desplazamiento suave de tarjetas
+* Diseño responsive mediante `LayoutBuilder`
+* Mejor organización visual de los accesos
+
+Los módulos y sus rutas de navegación se mantienen sin cambios funcionales.
+
 ### Caja
 
 El acceso a Caja utiliza:
@@ -549,7 +597,7 @@ La navegación fue probada correctamente.
 
 Estado:
 
-**Funcional y probado.**
+**Funcional, probado y visualmente rediseñado.**
 
 ---
 
@@ -594,7 +642,19 @@ Actualmente:
 * Firestore permite guardar movimientos de Caja.
 * Los módulos principales están funcionales.
 * El MVP completo fue probado mediante un flujo integrado.
+* El Panel principal fue rediseñado y validado.
+* El Dashboard fue rediseñado y validado.
+* La lógica de negocio existente se mantiene sin cambios por el rediseño visual.
 * No se detectaron errores funcionales durante la validación actual.
+
+### Archivos modificados durante el rediseño actual
+
+* `lib/screens/business_setup_screen.dart`
+* `lib/screens/dashboard_screen.dart`
+
+Estos cambios corresponden principalmente a la mejora visual y de UX del Panel principal y Dashboard.
+
+No se deben descartar estos cambios antes de realizar el commit correspondiente.
 
 No hay que asumir que una nueva funcionalidad está terminada hasta comprobar:
 
@@ -658,9 +718,22 @@ Se comprobó:
 * Editar cliente
 * Eliminar cliente
 
+### Prueba del rediseño visual
+
+Se comprobó:
+
+* Panel principal rediseñado
+* Navegación desde el nuevo panel
+* Dashboard rediseñado
+* Visualización de métricas
+* Visualización de stock
+* Diseño responsive
+* Animaciones y efectos visuales
+* Conservación de los datos existentes
+
 ### Resultado de la validación
 
-**El MVP actual funciona correctamente en la prueba realizada.**
+**El MVP actual funciona correctamente en la prueba realizada y cuenta con un primer rediseño visual validado para el Panel principal y Dashboard.**
 
 ---
 
@@ -732,23 +805,47 @@ No realizar commits con cambios desconocidos o no relacionados.
 
 # 17. Próximos pasos
 
-## Paso 1 — Guardar el estado actual
+## Paso 1 — Guardar el rediseño actual
 
-La Caja ya está implementada, integrada y probada.
+El MVP ya fue validado funcionalmente.
 
-La validación general del MVP también fue realizada.
+El Panel principal y Dashboard también fueron rediseñados y probados.
 
 Pendiente inmediato:
 
-- Ejecutar `flutter analyze`
-- Revisar `git status`
-- Confirmar los archivos modificados
-- Crear commit
-- Push a GitHub
+- Reemplazar `PROJECT_CONTEXT.md` con esta versión actualizada.
+- Ejecutar `git status`.
+- Confirmar que los cambios correspondan únicamente a lo esperado.
+- Crear commit.
+- Push a GitHub.
+
+Los archivos modificados esperados actualmente son:
+
+- `lib/screens/business_setup_screen.dart`
+- `lib/screens/dashboard_screen.dart`
+- `PROJECT_CONTEXT.md`
 
 ---
 
-## Paso 2 — Evaluar ajustes del MVP
+## Paso 2 — Continuar el rediseño visual
+
+Una vez guardado el estado actual, se puede continuar con el rediseño visual de otros módulos.
+
+La prioridad será mejorar progresivamente la interfaz sin alterar innecesariamente:
+
+- Firebase
+- Firestore
+- reglas de seguridad
+- estructura de datos
+- lógica de negocio
+- navegación
+- `businessId`
+
+Cada pantalla deberá validarse individualmente antes de continuar con la siguiente.
+
+---
+
+## Paso 3 — Evaluar ajustes del MVP
 
 Después de dejar esta versión guardada, evaluar únicamente mejoras que aporten valor real.
 
@@ -766,7 +863,7 @@ No modificarlo hasta decidir el comportamiento definitivo.
 
 ---
 
-## Paso 3 — Prueba con negocio real
+## Paso 4 — Prueba con negocio real
 
 Probar BizzFlow con un negocio pequeño real para detectar:
 
@@ -779,7 +876,7 @@ Probar BizzFlow con un negocio pequeño real para detectar:
 
 ---
 
-## Paso 4 — Resumen / estadísticas
+## Paso 5 — Resumen / estadísticas
 
 Evaluar posteriormente si hace falta implementar un módulo adicional de resumen o estadísticas.
 
@@ -806,7 +903,7 @@ No agregar todavía:
 
 La prioridad actual es:
 
-**tener una aplicación pequeña, funcional y utilizable rápidamente para probarla con negocios reales.**
+**tener una aplicación pequeña, funcional, visualmente clara y utilizable rápidamente para probarla con negocios reales.**
 
 ```
 

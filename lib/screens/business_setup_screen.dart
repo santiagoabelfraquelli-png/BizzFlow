@@ -138,9 +138,20 @@ class _BusinessSetupScreenState extends State<BusinessSetupScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
-                        Icons.storefront_outlined,
-                        size: 80,
+                      Container(
+                        width: 96,
+                        height: 96,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primaryContainer,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.storefront_rounded,
+                          size: 48,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                       ),
                       const SizedBox(height: 24),
                       const Text(
@@ -152,30 +163,48 @@ class _BusinessSetupScreenState extends State<BusinessSetupScreen> {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 12),
-                      const Text(
+                      Text(
                         'Primero necesitamos algunos datos '
                         'para comenzar a usar BizzFlow.',
                         textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurfaceVariant,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 32),
                       TextField(
                         controller: _businessNameController,
                         textCapitalization: TextCapitalization.sentences,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Nombre del negocio',
                           hintText: 'Ej: Mi almacén',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(
+                          prefixIcon: const Icon(
                             Icons.store_outlined,
+                          ),
+                          filled: true,
+                          fillColor: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
                           ),
                         ),
                       ),
                       const SizedBox(height: 20),
                       SizedBox(
                         width: double.infinity,
+                        height: 54,
                         child: FilledButton(
-                          onPressed:
-                              _isCreating ? null : _createBusiness,
+                          onPressed: _isCreating ? null : _createBusiness,
+                          style: FilledButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
                           child: _isCreating
                               ? const SizedBox(
                                   width: 22,
@@ -186,6 +215,9 @@ class _BusinessSetupScreenState extends State<BusinessSetupScreen> {
                                 )
                               : const Text(
                                   'Crear negocio',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                         ),
                       ),
@@ -213,19 +245,32 @@ class BusinessHomeScreen extends StatelessWidget {
     required this.businessId,
   });
 
+  void _openModule(
+    BuildContext context,
+    Widget screen,
+  ) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => screen,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     final modules = <_ModuleItem>[
       _ModuleItem(
         title: 'Dashboard',
         subtitle: 'Resumen de tu negocio',
-        icon: Icons.dashboard_outlined,
+        icon: Icons.dashboard_rounded,
+        color: colorScheme.primary,
         onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => DashboardScreen(
-                businessId: businessId,
-              ),
+          _openModule(
+            context,
+            DashboardScreen(
+              businessId: businessId,
             ),
           );
         },
@@ -233,13 +278,13 @@ class BusinessHomeScreen extends StatelessWidget {
       _ModuleItem(
         title: 'Ventas',
         subtitle: 'Registrar y consultar ventas',
-        icon: Icons.point_of_sale_outlined,
+        icon: Icons.point_of_sale_rounded,
+        color: Colors.blue,
         onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => SalesScreen(
-                businessId: businessId,
-              ),
+          _openModule(
+            context,
+            SalesScreen(
+              businessId: businessId,
             ),
           );
         },
@@ -247,13 +292,13 @@ class BusinessHomeScreen extends StatelessWidget {
       _ModuleItem(
         title: 'Caja',
         subtitle: 'Controlar ingresos y egresos',
-        icon: Icons.account_balance_wallet_outlined,
+        icon: Icons.account_balance_wallet_rounded,
+        color: Colors.green,
         onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => CashScreen(
-                businessId: businessId,
-              ),
+          _openModule(
+            context,
+            CashScreen(
+              businessId: businessId,
             ),
           );
         },
@@ -261,13 +306,13 @@ class BusinessHomeScreen extends StatelessWidget {
       _ModuleItem(
         title: 'Stock',
         subtitle: 'Controlar existencias',
-        icon: Icons.inventory_2_outlined,
+        icon: Icons.inventory_2_rounded,
+        color: Colors.orange,
         onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => StockScreen(
-                businessId: businessId,
-              ),
+          _openModule(
+            context,
+            StockScreen(
+              businessId: businessId,
             ),
           );
         },
@@ -275,13 +320,13 @@ class BusinessHomeScreen extends StatelessWidget {
       _ModuleItem(
         title: 'Categorías',
         subtitle: 'Organizar productos',
-        icon: Icons.category_outlined,
+        icon: Icons.category_rounded,
+        color: Colors.purple,
         onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => CategoriesScreen(
-                businessId: businessId,
-              ),
+          _openModule(
+            context,
+            CategoriesScreen(
+              businessId: businessId,
             ),
           );
         },
@@ -289,13 +334,13 @@ class BusinessHomeScreen extends StatelessWidget {
       _ModuleItem(
         title: 'Productos',
         subtitle: 'Administrar productos',
-        icon: Icons.inventory_outlined,
+        icon: Icons.inventory_rounded,
+        color: Colors.indigo,
         onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => ProductsScreen(
-                businessId: businessId,
-              ),
+          _openModule(
+            context,
+            ProductsScreen(
+              businessId: businessId,
             ),
           );
         },
@@ -303,13 +348,13 @@ class BusinessHomeScreen extends StatelessWidget {
       _ModuleItem(
         title: 'Clientes',
         subtitle: 'Administrar clientes',
-        icon: Icons.people_outline,
+        icon: Icons.people_alt_rounded,
+        color: Colors.teal,
         onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => CustomersScreen(
-                businessId: businessId,
-              ),
+          _openModule(
+            context,
+            CustomersScreen(
+              businessId: businessId,
             ),
           );
         },
@@ -317,13 +362,13 @@ class BusinessHomeScreen extends StatelessWidget {
       _ModuleItem(
         title: 'Gastos',
         subtitle: 'Registrar y controlar gastos',
-        icon: Icons.receipt_long_outlined,
+        icon: Icons.receipt_long_rounded,
+        color: Colors.red,
         onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => ExpensesScreen(
-                businessId: businessId,
-              ),
+          _openModule(
+            context,
+            ExpensesScreen(
+              businessId: businessId,
             ),
           );
         },
@@ -331,79 +376,314 @@ class BusinessHomeScreen extends StatelessWidget {
     ];
 
     return Scaffold(
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('BizzFlow'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        titleSpacing: 20,
+        title: Row(
           children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.storefront_rounded,
+                color: colorScheme.primary,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 12),
             const Text(
-              'Panel principal',
+              'BizzFlow',
               style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.5,
               ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Administrá tu negocio desde un solo lugar.',
-            ),
-            const SizedBox(height: 24),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: modules.length,
-              gridDelegate:
-                  const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 300,
-                mainAxisExtent: 150,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-              ),
-              itemBuilder: (context, index) {
-                final module = modules[index];
-
-                return Card(
-                  clipBehavior: Clip.antiAlias,
-                  child: InkWell(
-                    onTap: module.onTap,
-                    child: Padding(
-                      padding: const EdgeInsets.all(18),
-                      child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
-                        children: [
-                          Icon(
-                            module.icon,
-                            size: 34,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .primary,
-                          ),
-                          const Spacer(),
-                          Text(
-                            module.title,
-                            style: const TextStyle(
-                              fontSize: 19,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            module.subtitle,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
             ),
           ],
+        ),
+      ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final horizontalPadding =
+              constraints.maxWidth >= 900 ? 40.0 : 20.0;
+
+          return SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              20,
+              horizontalPadding,
+              32,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _WelcomeHeader(
+                  colorScheme: colorScheme,
+                ),
+                const SizedBox(height: 28),
+                const Text(
+                  'Módulos',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Todo lo que necesitás para administrar tu negocio.',
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: modules.length,
+                  gridDelegate:
+                      const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 340,
+                    mainAxisExtent: 178,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                  ),
+                  itemBuilder: (context, index) {
+                    final module = modules[index];
+
+                    return TweenAnimationBuilder<double>(
+                      duration: Duration(
+                        milliseconds: 300 + (index * 50),
+                      ),
+                      tween: Tween(
+                        begin: 0,
+                        end: 1,
+                      ),
+                      curve: Curves.easeOutCubic,
+                      builder: (context, value, child) {
+                        return Opacity(
+                          opacity: value,
+                          child: Transform.translate(
+                            offset: Offset(
+                              0,
+                              18 * (1 - value),
+                            ),
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: _ModuleCard(
+                        module: module,
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _WelcomeHeader extends StatelessWidget {
+  final ColorScheme colorScheme;
+
+  const _WelcomeHeader({
+    required this.colorScheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colorScheme.primary,
+            colorScheme.primary.withValues(alpha: 0.78),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.primary.withValues(alpha: 0.18),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '¡Hola! 👋',
+                  style: TextStyle(
+                    color: colorScheme.onPrimary,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.8,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Administrá tu negocio de forma simple y ordenada.',
+                  style: TextStyle(
+                    color: colorScheme.onPrimary.withValues(alpha: 0.88),
+                    fontSize: 15,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 20),
+          Container(
+            width: 68,
+            height: 68,
+            decoration: BoxDecoration(
+              color: colorScheme.onPrimary.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(22),
+            ),
+            child: Icon(
+              Icons.storefront_rounded,
+              size: 34,
+              color: colorScheme.onPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ModuleCard extends StatefulWidget {
+  final _ModuleItem module;
+
+  const _ModuleCard({
+    required this.module,
+  });
+
+  @override
+  State<_ModuleCard> createState() => _ModuleCardState();
+}
+
+class _ModuleCardState extends State<_ModuleCard> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final module = widget.module;
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) {
+        setState(() {
+          _isHovered = true;
+        });
+      },
+      onExit: (_) {
+        setState(() {
+          _isHovered = false;
+        });
+      },
+      child: AnimatedScale(
+        scale: _isHovered ? 1.015 : 1,
+        duration: const Duration(milliseconds: 160),
+        curve: Curves.easeOut,
+        child: Card(
+          margin: EdgeInsets.zero,
+          elevation: _isHovered ? 5 : 1,
+          shadowColor: module.color.withValues(alpha: 0.18),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+            side: BorderSide(
+              color: _isHovered
+                  ? module.color.withValues(alpha: 0.28)
+                  : colorScheme.outlineVariant.withValues(alpha: 0.5),
+            ),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: module.onTap,
+            borderRadius: BorderRadius.circular(22),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: module.color.withValues(
+                            alpha: _isHovered ? 0.18 : 0.11,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Icon(
+                          module.icon,
+                          color: module.color,
+                          size: 26,
+                        ),
+                      ),
+                      const Spacer(),
+                      AnimatedSlide(
+                        duration: const Duration(milliseconds: 180),
+                        offset: _isHovered
+                            ? const Offset(0.12, 0)
+                            : Offset.zero,
+                        child: Icon(
+                          Icons.arrow_forward_rounded,
+                          color: _isHovered
+                              ? module.color
+                              : colorScheme.onSurfaceVariant,
+                          size: 21,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  Text(
+                    module.title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    module.subtitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 13,
+                      height: 1.25,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -414,12 +694,14 @@ class _ModuleItem {
   final String title;
   final String subtitle;
   final IconData icon;
+  final Color color;
   final VoidCallback onTap;
 
   const _ModuleItem({
     required this.title,
     required this.subtitle,
     required this.icon,
+    required this.color,
     required this.onTap,
   });
 }
