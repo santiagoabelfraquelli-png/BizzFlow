@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import './categories_screen.dart';
 import './customers_screen.dart';
+import './dashboard_screen.dart';
 import './expenses_screen.dart';
 import './products_screen.dart';
 import './sales_screen.dart';
@@ -108,10 +109,7 @@ class _BusinessSetupScreenState extends State<BusinessSetupScreen> {
     }
 
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      stream: _firestore
-          .collection('users')
-          .doc(user.uid)
-          .snapshots(),
+      stream: _firestore.collection('users').doc(user.uid).snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
@@ -161,8 +159,7 @@ class _BusinessSetupScreenState extends State<BusinessSetupScreen> {
                       const SizedBox(height: 32),
                       TextField(
                         controller: _businessNameController,
-                        textCapitalization:
-                            TextCapitalization.sentences,
+                        textCapitalization: TextCapitalization.sentences,
                         decoration: const InputDecoration(
                           labelText: 'Nombre del negocio',
                           hintText: 'Ej: Mi almacén',
@@ -218,6 +215,20 @@ class BusinessHomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final modules = <_ModuleItem>[
+      _ModuleItem(
+        title: 'Dashboard',
+        subtitle: 'Resumen de tu negocio',
+        icon: Icons.dashboard_outlined,
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => DashboardScreen(
+                businessId: businessId,
+              ),
+            ),
+          );
+        },
+      ),
       _ModuleItem(
         title: 'Ventas',
         subtitle: 'Registrar y consultar ventas',
