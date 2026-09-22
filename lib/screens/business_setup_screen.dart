@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import './categories_screen.dart';
+import './cash_screen.dart';
 import './customers_screen.dart';
 import './dashboard_screen.dart';
 import './expenses_screen.dart';
@@ -237,6 +238,20 @@ class BusinessHomeScreen extends StatelessWidget {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => SalesScreen(
+                businessId: businessId,
+              ),
+            ),
+          );
+        },
+      ),
+      _ModuleItem(
+        title: 'Caja',
+        subtitle: 'Controlar ingresos y egresos',
+        icon: Icons.account_balance_wallet_outlined,
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => CashScreen(
                 businessId: businessId,
               ),
             ),

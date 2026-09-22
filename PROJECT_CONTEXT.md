@@ -1,3 +1,4 @@
+```markdown
 # BizzFlow — PROJECT_CONTEXT.md
 
 > **Fuente de verdad del proyecto.**
@@ -61,20 +62,24 @@ Un negocio nunca debe poder acceder a los datos de otro negocio.
 
 ## 4. Flujo principal actual
 
-El flujo previsto del MVP es:
+El flujo actual del MVP es:
 
 1. Crear/iniciar sesión
 2. Configurar negocio
-3. Categorías
-4. Productos
-5. Stock
-6. Ventas
-7. Clientes
-8. Gastos
-9. Caja
-10. Resumen / estadísticas básicas
+3. Dashboard
+4. Ventas
+5. Caja
+6. Stock
+7. Categorías
+8. Productos
+9. Clientes
+10. Gastos
 
-Todavía faltan Caja y Resumen.
+El módulo de Caja ya está implementado e integrado en el panel principal.
+
+El siguiente módulo grande pendiente es:
+
+**Resumen / estadísticas básicas**, si se considera necesario después de validar el MVP actual.
 
 ---
 
@@ -104,6 +109,9 @@ Colecciones utilizadas actualmente:
 - `sales`
 - `customers`
 - `expenses`
+- `cash_movements`
+
+Todas las colecciones de datos del negocio utilizan `businessId`.
 
 ---
 
@@ -276,7 +284,7 @@ Esto es intencional para mantener el MVP simple.
 
 Estado:
 
-**Implementado.**
+**Implementado y funcional.**
 
 ---
 
@@ -319,19 +327,148 @@ Campos:
 - `date`
 - `createdAt`
 
-El código de `expenses_screen.dart` quedó sin errores después de corregir problemas de copia/pegado.
+Estado:
 
-### Importante
+**Funcional y probado.**
 
-Todavía falta agregar la regla de Firestore para:
-
-`expenses`
-
-No continuar con funcionalidades posteriores hasta conectar y probar correctamente este módulo.
+La regla de Firestore para `expenses` está implementada y publicada.
 
 ---
 
-# 9. Panel principal
+# 9. Caja
+
+Archivo:
+
+`lib/screens/cash_screen.dart`
+
+La Caja utiliza la colección:
+
+`cash_movements`
+
+Cada movimiento manual contiene:
+
+- `businessId`
+- `type`
+- `amount`
+- `description`
+- `date`
+- `createdAt`
+- `source`
+
+Tipos posibles:
+
+- `income`
+- `expense`
+
+Fuentes:
+
+- `manual`
+- `sale`
+- `expense`
+
+### Funcionamiento
+
+La Caja obtiene:
+
+- Ventas existentes como ingresos
+- Gastos existentes como egresos
+- Movimientos manuales como ingresos o egresos
+
+El cálculo es:
+
+**Saldo = ventas + ingresos manuales - gastos - egresos manuales**
+
+La pantalla muestra:
+
+- Saldo actual
+- Ingresos
+- Egresos
+- Lista de movimientos
+
+Permite crear movimientos manuales mediante un botón flotante.
+
+### Movimientos manuales
+
+Se pueden crear:
+
+- Ingresos
+- Egresos
+
+Cada movimiento permite indicar:
+
+- Tipo
+- Descripción
+- Monto
+- Fecha
+
+### Estado
+
+**Funcional y probado.**
+
+Se comprobó:
+
+- Apertura de Caja
+- Carga de datos
+- Creación de movimientos
+- Actualización del saldo
+- Visualización de movimientos
+- Ingresos
+- Egresos
+
+La colección `cash_movements` cuenta con reglas de seguridad basadas en `businessId` y propietario del negocio.
+
+No se requieren índices compuestos para las consultas actuales de Caja, ya que el filtrado por `businessId` se realiza directamente y el orden de los movimientos se procesa en la aplicación.
+
+---
+
+# 10. Dashboard
+
+Archivo:
+
+`lib/screens/dashboard_screen.dart`
+
+El Dashboard muestra un resumen básico del negocio.
+
+Datos actuales:
+
+- Ventas de hoy
+- Cantidad de ventas
+- Gastos de hoy
+- Resultado del día
+- Productos sin stock
+- Productos con stock bajo
+
+Las ventas se consultan utilizando:
+
+- `businessId`
+- `createdAt`
+
+Los gastos se consultan utilizando:
+
+- `businessId`
+- `date`
+
+### Índices Firestore
+
+Se crearon los siguientes índices compuestos:
+
+#### Sales
+
+- `businessId` Ascending
+- `createdAt` Ascending
+
+#### Expenses
+
+- `businessId` Ascending
+- `date` Ascending
+
+Estado:
+
+**Funcional y probado.**
+
+---
+
+# 11. Panel principal
 
 Archivo:
 
@@ -346,38 +483,95 @@ Este archivo contiene:
 - Panel principal
 - Accesos a los módulos
 
-El panel debe contener:
+Actualmente el panel contiene:
 
+- Dashboard
 - Ventas
+- Caja
 - Stock
 - Categorías
 - Productos
 - Clientes
 - Gastos
 
-Actualmente se está intentando agregar correctamente el acceso a `ExpensesScreen`.
+Cada módulo recibe el `businessId` correspondiente.
+
+### Caja
+
+El acceso a Caja utiliza:
+
+`CashScreen`
+
+y recibe:
+
+`businessId`
+
+La navegación fue probada correctamente.
+
+Estado:
+
+**Funcional y probado.**
 
 ---
 
-# 10. Problema actual
+# 12. Reglas de Firestore
 
-Se intentó actualizar `business_setup_screen.dart` para agregar el botón de Gastos.
+Las reglas actuales protegen:
 
-El usuario tuvo errores de compilación porque al copiar código desde ChatGPT se introdujeron caracteres/formato extra dentro del archivo.
+- users
+- businesses
+- categories
+- products
+- sales
+- customers
+- expenses
+- cash_movements
 
-Los errores aparecieron en varias líneas y provocaron una cascada de errores como:
+Los módulos que almacenan datos del negocio verifican que:
 
-- `missing_identifier`
-- `expected_token`
-- `undefined_method`
-- `dead_code`
-- `ModuleItem isn't defined`
+1. El usuario esté autenticado.
+2. El documento tenga `businessId`.
+3. El negocio correspondiente pertenezca al usuario autenticado.
 
-Esto NO debe interpretarse automáticamente como múltiples problemas de lógica.
+La regla fundamental es:
 
-El patrón indica que el contenido del archivo quedó corrupto o recibió caracteres adicionales durante la copia.
+**Un usuario nunca debe poder leer, modificar, eliminar o crear datos asociados a otro negocio.**
 
-### Preferencia importante del usuario
+Cuando sea necesario modificar las reglas:
+
+**Siempre entregar el archivo completo de reglas de Firestore y no un fragmento aislado.**
+
+---
+
+# 13. Estado actual del código
+
+Actualmente:
+
+- `flutter analyze` está sin problemas.
+- Caja está integrada al panel.
+- Caja puede crear movimientos.
+- Firestore permite guardar movimientos de Caja.
+- Los módulos principales están funcionales.
+
+No hay que asumir que una nueva funcionalidad está terminada hasta comprobar:
+
+1. `flutter analyze`
+2. Prueba en Chrome
+3. Lectura correcta de Firestore
+4. Escritura correcta de Firestore cuando corresponda
+5. Seguridad mediante reglas cuando corresponda
+
+---
+
+# 14. Preferencias de trabajo del usuario
+
+El usuario trabaja con:
+
+- Windows
+- PowerShell
+- Cursor
+
+### Preferencia fundamental
 
 El usuario NO quiere modificar código por partes.
 
@@ -387,19 +581,7 @@ Cuando haya un problema:
 
 No pedirle que busque una línea concreta y cambie solamente una parte salvo que sea absolutamente necesario.
 
----
-
-# 11. Preferencias de trabajo del usuario
-
-El usuario trabaja con:
-
-- Windows
-- PowerShell
-- Cursor
-
-No asumir que utiliza VS Code.
-
-Flujo preferido:
+### Flujo de trabajo preferido
 
 1. Preparar archivo completo.
 2. Usuario reemplaza el archivo.
@@ -408,117 +590,104 @@ Flujo preferido:
 5. Probar en Chrome.
 6. Confirmar funcionamiento.
 7. Actualizar `PROJECT_CONTEXT.md`.
-8. Commit de Git.
-9. Continuar con el siguiente módulo.
+8. Revisar `git status`.
+9. Commit.
+10. Push a GitHub.
+11. Continuar con el siguiente módulo.
 
-### Importante
+### Regla importante
 
 No avanzar al siguiente módulo si `flutter analyze` tiene errores.
 
 ---
 
-# 12. Reglas de Firestore actuales
+# 15. Git
 
-Las reglas actuales tienen autorización para:
+El repositorio utiliza:
 
-- users
-- businesses
-- categories
-- products
-- sales
-- customers
+- Git
+- GitHub
+- Rama principal: `main`
 
-Todavía falta agregar `expenses`.
+Antes de realizar un commit:
 
-La regla esperada para gastos es:
-
-```rules
-match /expenses/{expenseId} {
-  allow create: if request.auth != null
-                && request.resource.data.businessId != null
-                && get(
-                     /databases/$(database)/documents/businesses/$(request.resource.data.businessId)
-                   ).data.ownerId == request.auth.uid;
-
-  allow read, update, delete: if request.auth != null
-                              && resource.data.businessId != null
-                              && get(
-                                   /databases/$(database)/documents/businesses/$(resource.data.businessId)
-                                 ).data.ownerId == request.auth.uid;
-}
+```powershell
+git status
 
 ```
 
-Cuando se agregue, preferir entregar el archivo completo de reglas de Firestore y no un fragmento aislado.
+Revisar que solamente estén presentes los cambios esperados.
+
+Después:
+
+```powershell
+git add .
+git commit -m "Mensaje descriptivo"
+git push
+
+```
+
+No realizar commits con cambios desconocidos o no relacionados.
 
 ---
 
-# 13. Próximos pasos
+# 16. Próximos pasos
 
-Orden recomendado:
+## Paso 1 — Cerrar Caja
 
-### Paso 1
+Ya está implementada, integrada y probada.
 
-Dejar `business_setup_screen.dart` completamente limpio.
+Pendiente:
 
-### Paso 2
-
-Ejecutar:
-
-`flutter analyze`
-
-Debe quedar sin errores.
-
-### Paso 3
-
-Probar en Chrome:
-
-- Abrir panel
-- Ver botón Gastos
-- Entrar a Gastos
-
-### Paso 4
-
-Agregar regla Firestore para `expenses`.
-
-### Paso 5
-
-Probar:
-
-- Crear gasto
-- Ver gasto
-- Editar gasto
-- Eliminar gasto
-- Verificar total
-- Verificar `businessId`
-
-### Paso 6
-
-Continuar con:
-
-**Caja**
-
-### Paso 7
-
-Implementar:
-
-**Resumen / estadísticas básicas**
-
-### Paso 8
-
-Prueba completa del MVP.
-
-### Paso 9
-
-Actualizar este archivo.
-
-### Paso 10
-
-Commit y push a GitHub.
+- Revisar `git status`
+- Agregar cambios al commit
+- Commit
+- Push
 
 ---
 
-# 14. Alcance actual
+## Paso 2 — Validación general
+
+Realizar una prueba completa del MVP:
+
+- Registro
+- Inicio de sesión
+- Configuración del negocio
+- Dashboard
+- Categorías
+- Productos
+- Stock
+- Ventas
+- Clientes
+- Gastos
+- Caja
+
+Verificar especialmente que los datos pertenezcan al `businessId` correcto.
+
+---
+
+## Paso 3 — Resumen / estadísticas
+
+Después de validar el MVP actual, evaluar si hace falta implementar un módulo de resumen/estadísticas adicionales.
+
+No agregar gráficos o reportes complejos sin necesidad.
+
+---
+
+## Paso 4 — Prueba completa con negocio real
+
+Probar BizzFlow con un negocio pequeño real para detectar:
+
+- Flujos innecesarios
+- Campos que sobren
+- Campos que falten
+- Procesos tediosos
+- Problemas de usabilidad
+- Necesidades reales del negocio
+
+---
+
+# 17. Alcance actual
 
 No agregar todavía:
 
@@ -538,3 +707,16 @@ No agregar todavía:
 La prioridad actual es:
 
 **tener una aplicación pequeña, funcional y utilizable rápidamente para probarla con negocios reales.**
+
+```
+
+Con esto el contexto queda alineado con **el estado real de hoy**: Caja ya no aparece como pendiente, está integrada y las reglas de `cash_movements` están contempladas.
+
+Después de reemplazarlo, **no hagas todavía el commit**. Ejecutá:
+
+```powershell
+git status
+
+```
+
+y pasame el resultado. Así comprobamos exactamente qué archivos van a entrar en el commit.
