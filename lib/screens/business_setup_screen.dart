@@ -2,208 +2,203 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import 'package:bizzflow/screens/categories_screen.dart';
+import './categories_screen.dart';
+import './products_screen.dart';
 
 class BusinessSetupScreen extends StatefulWidget {
-  const BusinessSetupScreen({super.key});
+  const BusinessSetupScreen({
+    super.key,
+  });
 
   @override
   State<BusinessSetupScreen> createState() => _BusinessSetupScreenState();
 }
 
 class _BusinessSetupScreenState extends State<BusinessSetupScreen> {
-  final _businessNameController = TextEditingController();
-  final _ownerNameController = TextEditingController();
+  final TextEditingController _businessNameController =
+      TextEditingController();
 
-  String _businessType = 'Restaurante';
-  bool _isLoading = false;
-
-  final List<String> _businessTypes = [
-    'Restaurante',
-    'Panadería',
-    'Rotisería',
-    'Cafetería',
-    'Bar',
-    'Otro',
-  ];
+  bool _isSaving = false;
 
   Future<void> _createBusiness() async {
     final businessName = _businessNameController.text.trim();
-    final ownerName = _ownerNameController.text.trim();
 
-    if (businessName.isEmpty || ownerName.isEmpty) {
-      _showMessage('Completá todos los campos.');
+    if (businessName.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('IngresÃ¡ el nombre de tu negocio'),
+        ),
+      );
       return;
     }
 
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
-      _showMessage('No hay un usuario autenticado.');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No hay un usuario autenticado'),
+        ),
+      );
       return;
     }
 
     setState(() {
-      _isLoading = true;
+      _isSaving = true;
     });
 
     try {
       final businessRef =
           FirebaseFirestore.instance.collection('businesses').doc();
 
-      final userRef =
-          FirebaseFirestore.instance.collection('users').doc(user.uid);
-
-      final now = FieldValue.serverTimestamp();
-
       await businessRef.set({
         'name': businessName,
-        'type': _businessType,
         'ownerId': user.uid,
-        'ownerName': ownerName,
-        'createdAt': now,
+        'createdAt': FieldValue.serverTimestamp(),
       });
 
-      await userRef.set({
-        'email': user.email,
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .set({
         'businessId': businessRef.id,
-        'createdAt': now,
       }, SetOptions(merge: true));
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => BusinessHomeScreen(
-            businessId: businessRef.id,
-            businessName: businessName,
-          ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Negocio creado correctamente'),
         ),
       );
-    } on FirebaseException catch (e) {
-      _showMessage(
-        'No se pudo crear el negocio: ${e.message ?? e.code}',
-      );
     } catch (e) {
-      _showMessage('Ocurrió un error inesperado.');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al crear el negocio: $e'),
+          ),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {
-          _isLoading = false;
+          _isSaving = false;
         });
       }
     }
   }
 
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  }
-
   @override
   void dispose() {
     _businessNameController.dispose();
-    _ownerNameController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Configurar negocio'),
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 500),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'Configurá tu negocio',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Completá estos datos para comenzar a usar BizzFlow.',
-                ),
-                const SizedBox(height: 32),
-                TextField(
-                  controller: _businessNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre del negocio',
-                    hintText: 'Ej. La Esquina',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  initialValue: _businessType,
-                  decoration: const InputDecoration(
-                    labelText: 'Tipo de negocio',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: _businessTypes.map((type) {
-                    return DropdownMenuItem(
-                      value: type,
-                      child: Text(type),
-                    );
-                  }).toList(),
-                  onChanged: _isLoading
-                      ? null
-                      : (value) {
-                          if (value != null) {
-                            setState(() {
-                              _businessType = value;
-                            });
-                          }
-                        },
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _ownerNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre del propietario',
-                    hintText: 'Ej. Santiago',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                FilledButton(
-                  onPressed: _isLoading ? null : _createBusiness,
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Text('Crear negocio'),
-                ),
-              ],
-            ),
-          ),
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      return const Scaffold(
+        body: Center(
+          child: Text('No hay un usuario autenticado.'),
         ),
-      ),
+      );
+    }
+
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .snapshots(),
+      builder: (context, snapshot) {
+        final userData = snapshot.data?.data();
+        final businessId = userData?['businessId'] as String?;
+
+        if (businessId == null || businessId.isEmpty) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Configurar negocio'),
+            ),
+            body: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: 420,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.storefront_outlined,
+                        size: 72,
+                      ),
+                      const SizedBox(height: 24),
+                      const Text(
+                        'ConfigurÃ¡ tu negocio',
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'CompletÃ¡ los datos iniciales para comenzar a usar BizzFlow.',
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 32),
+                      TextField(
+                        controller: _businessNameController,
+                        textCapitalization: TextCapitalization.sentences,
+                        decoration: const InputDecoration(
+                          labelText: 'Nombre del negocio',
+                          hintText: 'Ej: Mi almacÃ©n',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.store),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          onPressed: _isSaving ? null : _createBusiness,
+                          child: _isSaving
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text('Crear negocio'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
+
+        return BusinessHomeScreen(
+          businessId: businessId,
+        );
+      },
     );
   }
 }
 
 class BusinessHomeScreen extends StatelessWidget {
   final String businessId;
-  final String businessName;
 
   const BusinessHomeScreen({
     super.key,
     required this.businessId,
-    required this.businessName,
   });
 
   @override
@@ -213,42 +208,65 @@ class BusinessHomeScreen extends StatelessWidget {
         title: const Text('BizzFlow'),
       ),
       body: Center(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              const Icon(
+                Icons.storefront,
+                size: 72,
+              ),
+              const SizedBox(height: 20),
               const Text(
-                'Bienvenido a BizzFlow',
+                'Panel principal',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 16),
-              Text(
-                businessName,
-                style: const TextStyle(
-                  fontSize: 22,
-                ),
+              const SizedBox(height: 12),
+              const Text(
+                'AdministrÃ¡ tu negocio desde acÃ¡.',
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 32),
               SizedBox(
                 width: 280,
                 child: FilledButton.icon(
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => CategoriesScreen(
-                          businessId: businessId,
-                        ),
+                        builder: (context) {
+                          return CategoriesScreen(
+                            businessId: businessId,
+                          );
+                        },
                       ),
                     );
                   },
                   icon: const Icon(Icons.category),
-                  label: const Text('Categorías'),
+                  label: const Text('CategorÃ­as'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: 280,
+                child: FilledButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) {
+                          return ProductsScreen(
+                            businessId: businessId,
+                          );
+                        },
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.inventory_2_outlined),
+                  label: const Text('Productos'),
                 ),
               ),
             ],
@@ -258,5 +276,3 @@ class BusinessHomeScreen extends StatelessWidget {
     );
   }
 }
-
-

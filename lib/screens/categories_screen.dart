@@ -18,19 +18,19 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
   bool _isSaving = false;
 
-  CollectionReference<Map<String, dynamic>> get _categories {
-    return FirebaseFirestore.instance.collection('categories');
+  CollectionReference<Map<String, dynamic>> get _categoriesRef =>
+      FirebaseFirestore.instance.collection('categories');
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
   }
 
   Future<void> _createCategory() async {
     final name = _nameController.text.trim();
 
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ingresá un nombre para la categoría'),
-        ),
-      );
       return;
     }
 
@@ -39,31 +39,33 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     });
 
     try {
-      await _categories.add({
+      await _categoriesRef.add({
         'businessId': widget.businessId,
         'name': name,
+        'active': true,
         'createdAt': FieldValue.serverTimestamp(),
       });
 
+      if (!mounted) return;
+
       _nameController.clear();
+      Navigator.of(context).pop();
 
-      if (mounted) {
-        Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('CategorÃ­a creada correctamente.'),
+        ),
+      );
+    } on FirebaseException catch (e) {
+      if (!mounted) return;
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Categoría creada correctamente'),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'No se pudo crear la categorÃ­a: ${e.message ?? e.code}',
           ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al crear categoría: $e'),
-          ),
-        );
-      }
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -81,9 +83,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Eliminar categoría'),
+          title: const Text('Eliminar categorÃ­a'),
           content: Text(
-            '¿Querés eliminar la categoría "$categoryName"?',
+            'Â¿QuerÃ©s eliminar la categorÃ­a "$categoryName"?',
           ),
           actions: [
             TextButton(
@@ -104,91 +106,91 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     }
 
     try {
-      await _categories.doc(categoryId).delete();
+      await _categoriesRef.doc(categoryId).delete();
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Categoría eliminada'),
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('CategorÃ­a eliminada.'),
+        ),
+      );
+    } on FirebaseException catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'No se pudo eliminar la categorÃ­a: ${e.message ?? e.code}',
           ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al eliminar categoría: $e'),
-          ),
-        );
-      }
+        ),
+      );
     }
   }
 
   void _showCreateCategoryDialog() {
     _nameController.clear();
 
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Nueva categoría'),
-          content: TextField(
-            controller: _nameController,
-            autofocus: true,
-            decoration: const InputDecoration(
-              labelText: 'Nombre',
-              hintText: 'Ej: Bebidas',
-              border: OutlineInputBorder(),
-            ),
-            textCapitalization: TextCapitalization.sentences,
-          ),
-          actions: [
-            TextButton(
-              onPressed: _isSaving
-                  ? null
-                  : () => Navigator.of(context).pop(),
-              child: const Text('Cancelar'),
-            ),
-            FilledButton(
-              onPressed: _isSaving ? null : _createCategory,
-              child: _isSaving
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Text('Crear'),
-            ),
-          ],
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Nueva categorÃ­a'),
+              content: TextField(
+                controller: _nameController,
+                autofocus: true,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: const InputDecoration(
+                  labelText: 'Nombre',
+                  hintText: 'Ej. Bebidas',
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (_) {
+                  setDialogState(() {});
+                },
+              ),
+              actions: [
+                TextButton(
+                  onPressed: _isSaving
+                      ? null
+                      : () => Navigator.of(context).pop(),
+                  child: const Text('Cancelar'),
+                ),
+                FilledButton(
+                  onPressed: _isSaving || _nameController.text.trim().isEmpty
+                      ? null
+                      : () async {
+                          await _createCategory();
+                        },
+                  child: _isSaving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text('Guardar'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
   }
 
   @override
-  void dispose() {
-    _nameController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Categorías'),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showCreateCategoryDialog,
-        child: const Icon(Icons.add),
+        title: const Text('CategorÃ­as'),
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-        stream: _categories
-            .where(
-              'businessId',
-              isEqualTo: widget.businessId,
-            )
+        stream: _categoriesRef
+            .where('businessId', isEqualTo: widget.businessId)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
@@ -196,7 +198,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'Error al cargar categorías:\n${snapshot.error}',
+                  'No se pudieron cargar las categorÃ­as.\n\n'
+                  '${snapshot.error}',
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -209,52 +212,53 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             );
           }
 
-          final categories = snapshot.data?.docs ?? [];
+          final categories = snapshot.data?.docs.toList() ?? [];
+
+          categories.sort((a, b) {
+            final nameA = (a.data()['name'] ?? '').toString().toLowerCase();
+            final nameB = (b.data()['name'] ?? '').toString().toLowerCase();
+
+            return nameA.compareTo(nameB);
+          });
 
           if (categories.isEmpty) {
             return const Center(
               child: Padding(
                 padding: EdgeInsets.all(24),
                 child: Text(
-                  'Todavía no hay categorías.\n\n'
-                  'Tocá el botón + para crear la primera.',
+                  'TodavÃ­a no tenÃ©s categorÃ­as.\n'
+                  'CreÃ¡ la primera con el botÃ³n +.',
                   textAlign: TextAlign.center,
                 ),
               ),
             );
           }
 
-          categories.sort((a, b) {
-            final nameA = a.data()['name'] as String? ?? '';
-            final nameB = b.data()['name'] as String? ?? '';
-
-            return nameA.toLowerCase().compareTo(
-                  nameB.toLowerCase(),
-                );
-          });
-
           return ListView.separated(
             padding: const EdgeInsets.all(16),
             itemCount: categories.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            separatorBuilder: (_, _) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
-              final document = categories[index];
-              final data = document.data();
-              final name = data['name'] as String? ?? 'Sin nombre';
+              final doc = categories[index];
+              final data = doc.data();
+
+              final name = (data['name'] ?? 'Sin nombre').toString();
+              final active = data['active'] != false;
 
               return Card(
                 child: ListTile(
                   leading: const CircleAvatar(
-                    child: Icon(Icons.category),
+                    child: Icon(Icons.category_outlined),
                   ),
                   title: Text(name),
+                  subtitle: Text(
+                    active ? 'Activa' : 'Inactiva',
+                  ),
                   trailing: IconButton(
+                    tooltip: 'Eliminar',
                     icon: const Icon(Icons.delete_outline),
                     onPressed: () {
-                      _deleteCategory(
-                        document.id,
-                        name,
-                      );
+                      _deleteCategory(doc.id, name);
                     },
                   ),
                 ),
@@ -262,6 +266,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             },
           );
         },
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _showCreateCategoryDialog,
+        icon: const Icon(Icons.add),
+        label: const Text('CategorÃ­a'),
       ),
     );
   }

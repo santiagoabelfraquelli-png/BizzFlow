@@ -79,30 +79,8 @@ class AppRouter extends StatelessWidget {
               return const BusinessSetupScreen();
             }
 
-            return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-              future: FirebaseFirestore.instance
-                  .collection('businesses')
-                  .doc(businessId)
-                  .get(),
-              builder: (context, businessSnapshot) {
-                if (businessSnapshot.connectionState ==
-                    ConnectionState.waiting) {
-                  return const Scaffold(
-                    body: Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  );
-                }
-
-                final businessData = businessSnapshot.data?.data();
-                final businessName =
-                    businessData?['name']?.toString() ?? 'Mi negocio';
-
-                return BusinessHomeScreen(
-                  businessId: businessId.toString(),
-                  businessName: businessName,
-                );
-              },
+            return BusinessHomeScreen(
+              businessId: businessId.toString(),
             );
           },
         );
@@ -130,7 +108,7 @@ class _AuthScreenState extends State<AuthScreen> {
     final password = _passwordController.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
-      _showMessage('Completá email y contraseña.');
+      _showMessage('CompletÃ¡ email y contraseÃ±a.');
       return;
     }
 
@@ -151,24 +129,24 @@ class _AuthScreenState extends State<AuthScreen> {
         );
       }
     } on FirebaseAuthException catch (e) {
-      String message = 'Ocurrió un error.';
+      String message = 'OcurriÃ³ un error.';
 
       switch (e.code) {
         case 'email-already-in-use':
-          message = 'Ese email ya está registrado.';
+          message = 'Ese email ya estÃ¡ registrado.';
           break;
         case 'invalid-email':
-          message = 'El email no es válido.';
+          message = 'El email no es vÃ¡lido.';
           break;
         case 'weak-password':
-          message = 'La contraseña es demasiado débil.';
+          message = 'La contraseÃ±a es demasiado dÃ©bil.';
           break;
         case 'user-not-found':
           message = 'No existe una cuenta con ese email.';
           break;
         case 'wrong-password':
         case 'invalid-credential':
-          message = 'Email o contraseña incorrectos.';
+          message = 'Email o contraseÃ±a incorrectos.';
           break;
       }
 
@@ -231,7 +209,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   controller: _passwordController,
                   obscureText: true,
                   decoration: const InputDecoration(
-                    labelText: 'Contraseña',
+                    labelText: 'ContraseÃ±a',
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -239,7 +217,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 FilledButton(
                   onPressed: _isLoading ? null : _submit,
                   child: Text(
-                    _isLogin ? 'Iniciar sesión' : 'Crear cuenta',
+                    _isLogin ? 'Iniciar sesiÃ³n' : 'Crear cuenta',
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -253,8 +231,8 @@ class _AuthScreenState extends State<AuthScreen> {
                         },
                   child: Text(
                     _isLogin
-                        ? '¿No tenés cuenta? Crear una'
-                        : '¿Ya tenés cuenta? Iniciar sesión',
+                        ? 'Â¿No tenÃ©s cuenta? Crear una'
+                        : 'Â¿Ya tenÃ©s cuenta? Iniciar sesiÃ³n',
                   ),
                 ),
               ],
@@ -265,4 +243,3 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 }
-
