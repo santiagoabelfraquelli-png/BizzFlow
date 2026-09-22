@@ -17,12 +17,12 @@ El objetivo actual es crear un MVP funcional que pueda probarse rápidamente con
 
 El proyecto está desarrollado con:
 
-- Flutter
-- Dart
-- Firebase Authentication
-- Cloud Firestore
-- Git / GitHub
-- Cursor como editor
+* Flutter
+* Dart
+* Firebase Authentication
+* Cloud Firestore
+* Git / GitHub
+* Cursor como editor
 
 El usuario es principiante/intermedio en programación y prefiere soluciones completas y concretas.
 
@@ -75,11 +75,9 @@ El flujo actual del MVP es:
 9. Clientes
 10. Gastos
 
-El módulo de Caja ya está implementado e integrado en el panel principal.
+Todos estos módulos están actualmente implementados, integrados y probados.
 
-El siguiente módulo grande pendiente es:
-
-**Resumen / estadísticas básicas**, si se considera necesario después de validar el MVP actual.
+El siguiente paso no es agregar otro módulo grande inmediatamente, sino mantener una versión estable del MVP y evaluar posteriormente mejoras o una prueba con un negocio real.
 
 ---
 
@@ -87,10 +85,10 @@ El siguiente módulo grande pendiente es:
 
 Firebase Authentication está configurado para:
 
-- Registro
-- Inicio de sesión
-- Verificación de email
-- Recuperación de contraseña
+* Registro
+* Inicio de sesión
+* Verificación de email
+* Recuperación de contraseña
 
 La sesión de Firebase se mantiene entre aperturas de la aplicación.
 
@@ -102,14 +100,14 @@ No guardar contraseñas en texto plano en Firestore.
 
 Colecciones utilizadas actualmente:
 
-- `users`
-- `businesses`
-- `categories`
-- `products`
-- `sales`
-- `customers`
-- `expenses`
-- `cash_movements`
+* `users`
+* `businesses`
+* `categories`
+* `products`
+* `sales`
+* `customers`
+* `expenses`
+* `cash_movements`
 
 Todas las colecciones de datos del negocio utilizan `businessId`.
 
@@ -125,18 +123,18 @@ Archivo:
 
 Funcionalidades:
 
-- Listar categorías
-- Crear categorías
-- Eliminar categorías
-- Orden alfabético
-- Filtrado por `businessId`
+* Listar categorías
+* Crear categorías
+* Eliminar categorías
+* Orden alfabético
+* Filtrado por `businessId`
 
 Campos:
 
-- `businessId`
-- `name`
-- `active`
-- `createdAt`
+* `businessId`
+* `name`
+* `active`
+* `createdAt`
 
 Estado:
 
@@ -152,34 +150,34 @@ Archivo:
 
 Funcionalidades:
 
-- Crear productos
-- Listar productos
-- Eliminar productos
-- Seleccionar categoría
-- Precio
-- Stock inicial
-- Unidad
-- Filtrado por `businessId`
+* Crear productos
+* Listar productos
+* Eliminar productos
+* Seleccionar categoría
+* Precio
+* Stock inicial
+* Unidad
+* Filtrado por `businessId`
 
 Unidades disponibles:
 
-- unidad
-- kg
-- g
-- litro
-- ml
+* unidad
+* kg
+* g
+* litro
+* ml
 
 Campos:
 
-- `businessId`
-- `name`
-- `categoryId`
-- `categoryName`
-- `price`
-- `stock`
-- `unit`
-- `active`
-- `createdAt`
+* `businessId`
+* `name`
+* `categoryId`
+* `categoryName`
+* `price`
+* `stock`
+* `unit`
+* `active`
+* `createdAt`
 
 Estado:
 
@@ -195,38 +193,43 @@ Archivo:
 
 Funcionalidades:
 
-- Listar productos
-- Agregar productos al carrito
-- Incrementar cantidades
-- Eliminar productos del carrito
-- Calcular total
-- Confirmar venta
-- Descontar stock
-- Crear registro de venta
+* Listar productos
+* Agregar productos al carrito
+* Incrementar cantidades
+* Eliminar productos del carrito
+* Calcular total
+* Confirmar venta
+* Descontar stock
+* Crear registro de venta
 
 La venta utiliza una transacción de Firestore para actualizar el stock y registrar la venta de forma atómica.
 
 Campos principales de una venta:
 
-- `businessId`
-- `items`
-- `total`
-- `createdAt`
+* `businessId`
+* `items`
+* `total`
+* `createdAt`
 
 Cada item contiene:
 
-- `productId`
-- `productName`
-- `quantity`
-- `unit`
-- `unitPrice`
-- `subtotal`
+* `productId`
+* `productName`
+* `quantity`
+* `unit`
+* `unitPrice`
+* `subtotal`
 
 Estado:
 
 **Funcional y probado.**
 
-El usuario confirmó que el stock se descuenta correctamente al realizar una venta.
+Se comprobó mediante una venta real de prueba que:
+
+* El total se calcula correctamente.
+* La venta se registra.
+* El stock se descuenta correctamente.
+* Dashboard refleja la venta.
 
 ---
 
@@ -238,22 +241,28 @@ Archivo:
 
 Funcionalidades:
 
-- Ver stock de productos
-- Mostrar categoría
-- Mostrar unidad
-- Estado del stock
-- Agregar stock
-- Actualización mediante transacción Firestore
+* Ver stock de productos
+* Mostrar categoría
+* Mostrar unidad
+* Estado del stock
+* Agregar stock
+* Actualización mediante transacción Firestore
 
-Estados visuales:
+Estados visuales actuales:
 
-- `<= 0`: Sin stock
-- `<= 5`: Stock bajo
-- `> 5`: Stock disponible
+* `<= 0`: Sin stock
+* `<= 5`: Stock bajo
+* `> 5`: Stock disponible
 
 Estado:
 
 **Funcional y probado.**
+
+### Nota
+
+Actualmente el Dashboard considera como stock bajo los productos con stock `<= 5`.
+
+Este criterio podrá revisarse posteriormente. No modificarlo hasta realizar una decisión específica sobre el comportamiento deseado.
 
 ---
 
@@ -265,18 +274,18 @@ Archivo:
 
 Funcionalidades:
 
-- Crear cliente
-- Listar clientes
-- Editar cliente
-- Eliminar cliente
+* Crear cliente
+* Listar clientes
+* Editar cliente
+* Eliminar cliente
 
 Datos:
 
-- Nombre obligatorio
-- Teléfono opcional
-- Email opcional
-- `businessId`
-- `createdAt`
+* Nombre obligatorio
+* Teléfono opcional
+* Email opcional
+* `businessId`
+* `createdAt`
 
 Actualmente los clientes todavía no están vinculados con las ventas.
 
@@ -284,7 +293,14 @@ Esto es intencional para mantener el MVP simple.
 
 Estado:
 
-**Implementado y funcional.**
+**Funcional y probado.**
+
+Se comprobó:
+
+* Creación
+* Visualización
+* Edición
+* Eliminación
 
 ---
 
@@ -298,40 +314,46 @@ El módulo está implementado.
 
 Funcionalidades:
 
-- Crear gasto
-- Editar gasto
-- Eliminar gasto
-- Listar gastos
-- Mostrar total de gastos
-- Ordenar por fecha
-- Categorías de gastos
-- Fecha del gasto
-- Filtrado por `businessId`
+* Crear gasto
+* Editar gasto
+* Eliminar gasto
+* Listar gastos
+* Mostrar total de gastos
+* Ordenar por fecha
+* Categorías de gastos
+* Fecha del gasto
+* Filtrado por `businessId`
 
 Categorías:
 
-- Insumos
-- Alquiler
-- Servicios
-- Transporte
-- Sueldos
-- Mantenimiento
-- Otros
+* Insumos
+* Alquiler
+* Servicios
+* Transporte
+* Sueldos
+* Mantenimiento
+* Otros
 
 Campos:
 
-- `businessId`
-- `description`
-- `amount`
-- `category`
-- `date`
-- `createdAt`
+* `businessId`
+* `description`
+* `amount`
+* `category`
+* `date`
+* `createdAt`
 
 Estado:
 
 **Funcional y probado.**
 
 La regla de Firestore para `expenses` está implementada y publicada.
+
+Se comprobó que los gastos aparecen correctamente en:
+
+* Gastos
+* Dashboard
+* Caja
 
 ---
 
@@ -347,32 +369,32 @@ La Caja utiliza la colección:
 
 Cada movimiento manual contiene:
 
-- `businessId`
-- `type`
-- `amount`
-- `description`
-- `date`
-- `createdAt`
-- `source`
+* `businessId`
+* `type`
+* `amount`
+* `description`
+* `date`
+* `createdAt`
+* `source`
 
 Tipos posibles:
 
-- `income`
-- `expense`
+* `income`
+* `expense`
 
 Fuentes:
 
-- `manual`
-- `sale`
-- `expense`
+* `manual`
+* `sale`
+* `expense`
 
 ### Funcionamiento
 
 La Caja obtiene:
 
-- Ventas existentes como ingresos
-- Gastos existentes como egresos
-- Movimientos manuales como ingresos o egresos
+* Ventas existentes como ingresos
+* Gastos existentes como egresos
+* Movimientos manuales como ingresos o egresos
 
 El cálculo es:
 
@@ -380,10 +402,10 @@ El cálculo es:
 
 La pantalla muestra:
 
-- Saldo actual
-- Ingresos
-- Egresos
-- Lista de movimientos
+* Saldo actual
+* Ingresos
+* Egresos
+* Lista de movimientos
 
 Permite crear movimientos manuales mediante un botón flotante.
 
@@ -391,29 +413,37 @@ Permite crear movimientos manuales mediante un botón flotante.
 
 Se pueden crear:
 
-- Ingresos
-- Egresos
+* Ingresos
+* Egresos
 
 Cada movimiento permite indicar:
 
-- Tipo
-- Descripción
-- Monto
-- Fecha
+* Tipo
+* Descripción
+* Monto
+* Fecha
 
 ### Estado
 
-**Funcional y probado.**
+**Funcional, integrado y probado.**
 
 Se comprobó:
 
-- Apertura de Caja
-- Carga de datos
-- Creación de movimientos
-- Actualización del saldo
-- Visualización de movimientos
-- Ingresos
-- Egresos
+* Apertura de Caja
+* Carga de datos
+* Creación de movimientos
+* Actualización del saldo
+* Visualización de movimientos
+* Ingresos
+* Egresos
+* Integración con ventas
+* Integración con gastos
+
+También se comprobó mediante una prueba real que:
+
+* Una venta de `$2000` aparece como ingreso.
+* Un gasto de `$500` aparece como egreso.
+* El saldo resultante es `$1500`.
 
 La colección `cash_movements` cuenta con reglas de seguridad basadas en `businessId` y propietario del negocio.
 
@@ -431,22 +461,22 @@ El Dashboard muestra un resumen básico del negocio.
 
 Datos actuales:
 
-- Ventas de hoy
-- Cantidad de ventas
-- Gastos de hoy
-- Resultado del día
-- Productos sin stock
-- Productos con stock bajo
+* Ventas de hoy
+* Cantidad de ventas
+* Gastos de hoy
+* Resultado del día
+* Productos sin stock
+* Productos con stock bajo
 
 Las ventas se consultan utilizando:
 
-- `businessId`
-- `createdAt`
+* `businessId`
+* `createdAt`
 
 Los gastos se consultan utilizando:
 
-- `businessId`
-- `date`
+* `businessId`
+* `date`
 
 ### Índices Firestore
 
@@ -454,17 +484,26 @@ Se crearon los siguientes índices compuestos:
 
 #### Sales
 
-- `businessId` Ascending
-- `createdAt` Ascending
+* `businessId` Ascending
+* `createdAt` Ascending
 
 #### Expenses
 
-- `businessId` Ascending
-- `date` Ascending
+* `businessId` Ascending
+* `date` Ascending
 
 Estado:
 
 **Funcional y probado.**
+
+Se comprobó mediante una prueba integrada que:
+
+* Las ventas del día aparecen correctamente.
+* La cantidad de ventas se actualiza.
+* Los gastos del día aparecen correctamente.
+* El resultado del día se calcula correctamente.
+* El stock sin existencias se informa correctamente.
+* El stock bajo se informa según el criterio actual.
 
 ---
 
@@ -476,23 +515,23 @@ Archivo:
 
 Este archivo contiene:
 
-- Configuración inicial del negocio
-- Creación del documento `businesses`
-- Asociación del negocio al usuario
-- `BusinessHomeScreen`
-- Panel principal
-- Accesos a los módulos
+* Configuración inicial del negocio
+* Creación del documento `businesses`
+* Asociación del negocio al usuario
+* `BusinessHomeScreen`
+* Panel principal
+* Accesos a los módulos
 
 Actualmente el panel contiene:
 
-- Dashboard
-- Ventas
-- Caja
-- Stock
-- Categorías
-- Productos
-- Clientes
-- Gastos
+* Dashboard
+* Ventas
+* Caja
+* Stock
+* Categorías
+* Productos
+* Clientes
+* Gastos
 
 Cada módulo recibe el `businessId` correspondiente.
 
@@ -518,14 +557,14 @@ Estado:
 
 Las reglas actuales protegen:
 
-- users
-- businesses
-- categories
-- products
-- sales
-- customers
-- expenses
-- cash_movements
+* users
+* businesses
+* categories
+* products
+* sales
+* customers
+* expenses
+* cash_movements
 
 Los módulos que almacenan datos del negocio verifican que:
 
@@ -537,6 +576,8 @@ La regla fundamental es:
 
 **Un usuario nunca debe poder leer, modificar, eliminar o crear datos asociados a otro negocio.**
 
+Las reglas de `cash_movements` fueron agregadas y publicadas correctamente.
+
 Cuando sea necesario modificar las reglas:
 
 **Siempre entregar el archivo completo de reglas de Firestore y no un fragmento aislado.**
@@ -547,11 +588,13 @@ Cuando sea necesario modificar las reglas:
 
 Actualmente:
 
-- `flutter analyze` está sin problemas.
-- Caja está integrada al panel.
-- Caja puede crear movimientos.
-- Firestore permite guardar movimientos de Caja.
-- Los módulos principales están funcionales.
+* `flutter analyze` está sin problemas.
+* Caja está integrada al panel.
+* Caja puede crear movimientos.
+* Firestore permite guardar movimientos de Caja.
+* Los módulos principales están funcionales.
+* El MVP completo fue probado mediante un flujo integrado.
+* No se detectaron errores funcionales durante la validación actual.
 
 No hay que asumir que una nueva funcionalidad está terminada hasta comprobar:
 
@@ -563,13 +606,71 @@ No hay que asumir que una nueva funcionalidad está terminada hasta comprobar:
 
 ---
 
-# 14. Preferencias de trabajo del usuario
+# 14. Validación general realizada
+
+Se realizó una prueba integrada del MVP utilizando datos de prueba.
+
+Flujo probado:
+
+**Negocio → Categoría → Producto → Stock → Venta → Gasto → Dashboard → Caja → Clientes**
+
+### Prueba de ventas y stock
+
+Se utilizó:
+
+* Producto: Coca Cola
+* Stock inicial: 5
+* Precio unitario: `$1000`
+* Cantidad vendida: 2
+
+Resultado esperado y comprobado:
+
+* Total de venta: `$2000`
+* Stock restante: `3`
+
+### Prueba de gastos
+
+Se registró:
+
+* Gasto de prueba: `$500`
+
+Resultado:
+
+* Gastos del día: `$500`
+* Resultado del día: `$1500`
+
+### Prueba de Caja
+
+Resultado:
+
+* Ingresos: `$2000`
+* Egresos: `$500`
+* Saldo: `$1500`
+
+Los movimientos aparecen correctamente en Dashboard y Caja.
+
+### Prueba de Clientes
+
+Se comprobó:
+
+* Crear cliente
+* Visualizar cliente
+* Editar cliente
+* Eliminar cliente
+
+### Resultado de la validación
+
+**El MVP actual funciona correctamente en la prueba realizada.**
+
+---
+
+# 15. Preferencias de trabajo del usuario
 
 El usuario trabaja con:
 
-- Windows
-- PowerShell
-- Cursor
+* Windows
+* PowerShell
+* Cursor
 
 ### Preferencia fundamental
 
@@ -593,27 +694,26 @@ No pedirle que busque una línea concreta y cambie solamente una parte salvo que
 8. Revisar `git status`.
 9. Commit.
 10. Push a GitHub.
-11. Continuar con el siguiente módulo.
+11. Continuar con el siguiente objetivo.
 
 ### Regla importante
 
-No avanzar al siguiente módulo si `flutter analyze` tiene errores.
+No avanzar al siguiente objetivo si `flutter analyze` tiene errores.
 
 ---
 
-# 15. Git
+# 16. Git
 
 El repositorio utiliza:
 
-- Git
-- GitHub
-- Rama principal: `main`
+* Git
+* GitHub
+* Rama principal: `main`
 
 Antes de realizar un commit:
 
 ```powershell
 git status
-
 ```
 
 Revisar que solamente estén presentes los cambios esperados.
@@ -624,57 +724,49 @@ Después:
 git add .
 git commit -m "Mensaje descriptivo"
 git push
-
 ```
 
 No realizar commits con cambios desconocidos o no relacionados.
 
 ---
 
-# 16. Próximos pasos
+# 17. Próximos pasos
 
-## Paso 1 — Cerrar Caja
+## Paso 1 — Guardar el estado actual
 
-Ya está implementada, integrada y probada.
+La Caja ya está implementada, integrada y probada.
 
-Pendiente:
+La validación general del MVP también fue realizada.
 
+Pendiente inmediato:
+
+- Ejecutar `flutter analyze`
 - Revisar `git status`
-- Agregar cambios al commit
-- Commit
-- Push
+- Confirmar los archivos modificados
+- Crear commit
+- Push a GitHub
 
 ---
 
-## Paso 2 — Validación general
+## Paso 2 — Evaluar ajustes del MVP
 
-Realizar una prueba completa del MVP:
+Después de dejar esta versión guardada, evaluar únicamente mejoras que aporten valor real.
 
-- Registro
-- Inicio de sesión
-- Configuración del negocio
-- Dashboard
-- Categorías
-- Productos
-- Stock
-- Ventas
-- Clientes
-- Gastos
-- Caja
+Un posible ajuste identificado durante las pruebas es revisar el criterio de:
 
-Verificar especialmente que los datos pertenezcan al `businessId` correcto.
+**Stock bajo**
+
+Actualmente:
+
+- `0`: sin stock
+- `1–5`: stock bajo
+- `>5`: stock disponible
+
+No modificarlo hasta decidir el comportamiento definitivo.
 
 ---
 
-## Paso 3 — Resumen / estadísticas
-
-Después de validar el MVP actual, evaluar si hace falta implementar un módulo de resumen/estadísticas adicionales.
-
-No agregar gráficos o reportes complejos sin necesidad.
-
----
-
-## Paso 4 — Prueba completa con negocio real
+## Paso 3 — Prueba con negocio real
 
 Probar BizzFlow con un negocio pequeño real para detectar:
 
@@ -687,7 +779,15 @@ Probar BizzFlow con un negocio pequeño real para detectar:
 
 ---
 
-# 17. Alcance actual
+## Paso 4 — Resumen / estadísticas
+
+Evaluar posteriormente si hace falta implementar un módulo adicional de resumen o estadísticas.
+
+No agregar gráficos o reportes complejos sin necesidad.
+
+---
+
+# 18. Alcance actual
 
 No agregar todavía:
 
@@ -710,13 +810,5 @@ La prioridad actual es:
 
 ```
 
-Con esto el contexto queda alineado con **el estado real de hoy**: Caja ya no aparece como pendiente, está integrada y las reglas de `cash_movements` están contempladas.
-
-Después de reemplazarlo, **no hagas todavía el commit**. Ejecutá:
-
-```powershell
-git status
-
 ```
 
-y pasame el resultado. Así comprobamos exactamente qué archivos van a entrar en el commit.
