@@ -15,11 +15,10 @@ class ExpensesScreen extends StatefulWidget {
 
 class _ExpensesScreenState extends State<ExpensesScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final TextEditingController _descriptionController =
-      TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
 
-  final List<String> _expenseCategories = [
+  final List<String> _expenseCategories = const [
     'Insumos',
     'Alquiler',
     'Servicios',
@@ -31,6 +30,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
   String _selectedCategory = 'Otros';
   DateTime _selectedDate = DateTime.now();
+  String _periodFilter = 'Todos';
 
   CollectionReference<Map<String, dynamic>> get _expensesRef =>
       _firestore.collection('expenses');
@@ -55,10 +55,33 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
   double _getAmount(DocumentSnapshot<Map<String, dynamic>> expense) {
     final value = expense.data()?['amount'];
-    if (value is num) {
-      return value.toDouble();
-    }
+    if (value is num) return value.toDouble();
     return 0;
+  }
+
+  DateTime? _getExpenseDate(DocumentSnapshot<Map<String, dynamic>> expense) {
+    final value = expense.data()?['date'];
+    if (value is Timestamp) return value.toDate();
+    return null;
+  }
+
+  bool _isInPeriod(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final expenseDay = DateTime(date.year, date.month, date.day);
+
+    switch (_periodFilter) {
+      case 'Hoy':
+        return expenseDay == today;
+      case 'Semana':
+        final start = today.subtract(Duration(days: today.weekday - 1));
+        final end = start.add(const Duration(days: 7));
+        return !expenseDay.isBefore(start) && expenseDay.isBefore(end);
+      case 'Mes':
+        return date.year == now.year && date.month == now.month;
+      default:
+        return true;
+    }
   }
 
   Future<void> _selectDate(
@@ -71,28 +94,20 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
     );
-
     if (pickedDate == null) return;
-
-    setDialogState(() {
-      _selectedDate = pickedDate;
-    });
+    setDialogState(() => _selectedDate = pickedDate);
   }
 
   Future<void> _showExpenseDialog({
     DocumentSnapshot<Map<String, dynamic>>? expense,
   }) async {
     final data = expense?.data();
-
-    _descriptionController.text =
-        data?['description']?.toString() ?? '';
+    _descriptionController.text = data?['description']?.toString() ?? '';
 
     final existingAmount = data?['amount'];
-    if (existingAmount is num) {
-      _amountController.text = existingAmount.toString();
-    } else {
-      _amountController.clear();
-    }
+    _amountController.text = existingAmount is num
+        ? existingAmount.toString()
+        : '';
 
     final existingCategory = data?['category']?.toString() ?? 'Otros';
     _selectedCategory = _expenseCategories.contains(existingCategory)
@@ -100,11 +115,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         : 'Otros';
 
     final existingDate = data?['date'];
-    if (existingDate is Timestamp) {
-      _selectedDate = existingDate.toDate();
-    } else {
-      _selectedDate = DateTime.now();
-    }
+    _selectedDate = existingDate is Timestamp
+        ? existingDate.toDate()
+        : DateTime.now();
 
     final isEditing = expense != null;
 
@@ -139,9 +152,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 return;
               }
 
-              setDialogState(() {
-                isSaving = true;
-              });
+              setDialogState(() => isSaving = true);
 
               try {
                 final expenseData = <String, dynamic>{
@@ -160,9 +171,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 }
 
                 if (!mounted || !dialogContext.mounted) return;
-
                 Navigator.of(dialogContext).pop();
-
                 if (!mounted) return;
 
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -176,7 +185,6 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 );
               } catch (e) {
                 if (!mounted || !dialogContext.mounted) return;
-
                 ScaffoldMessenger.of(dialogContext).showSnackBar(
                   SnackBar(
                     content: Text('Error al guardar el gasto: $e'),
@@ -184,9 +192,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 );
               } finally {
                 if (dialogContext.mounted) {
-                  setDialogState(() {
-                    isSaving = false;
-                  });
+                  setDialogState(() => isSaving = false);
                 }
               }
             }
@@ -237,31 +243,29 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      items: _expenseCategories.map((category) {
-                        return DropdownMenuItem<String>(
-                          value: category,
-                          child: Text(category),
-                        );
-                      }).toList(),
+                      items: _expenseCategories
+                          .map(
+                            (category) => DropdownMenuItem<String>(
+                              value: category,
+                              child: Text(category),
+                            ),
+                          )
+                          .toList(),
                       onChanged: isSaving
                           ? null
                           : (value) {
                               if (value == null) return;
-                              setDialogState(() {
-                                _selectedCategory = value;
-                              });
+                              setDialogState(() => _selectedCategory = value);
                             },
                     ),
                     const SizedBox(height: 14),
                     InkWell(
                       onTap: isSaving
                           ? null
-                          : () {
-                              _selectDate(
+                          : () => _selectDate(
                                 dialogContext,
                                 setDialogState,
-                              );
-                            },
+                              ),
                       borderRadius: BorderRadius.circular(16),
                       child: InputDecorator(
                         decoration: InputDecoration(
@@ -313,53 +317,47 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     DocumentSnapshot<Map<String, dynamic>> expense,
   ) async {
     final data = expense.data();
-    final description =
-        data?['description']?.toString() ?? 'este gasto';
+    final description = data?['description']?.toString() ?? 'este gasto';
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Eliminar gasto'),
-          content: Text('¿Seguro que querés eliminar "$description"?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancelar'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Eliminar'),
-            ),
-          ],
-        );
-      },
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Eliminar gasto'),
+        content: Text('¿Seguro que querés eliminar "$description"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
     );
 
     if (confirmed != true) return;
 
     try {
       await _expensesRef.doc(expense.id).delete();
-
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Gasto eliminado correctamente.'),
-        ),
+        const SnackBar(content: Text('Gasto eliminado correctamente.')),
       );
     } catch (e) {
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al eliminar el gasto: $e'),
-        ),
+        SnackBar(content: Text('Error al eliminar el gasto: $e')),
       );
     }
   }
 
-  Widget _buildHeader(BuildContext context, double totalExpenses, int count) {
+  Widget _buildSummaryCard(
+    BuildContext context, {
+    required double total,
+    required int count,
+  }) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
@@ -367,53 +365,161 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: colors.primaryContainer,
-        borderRadius: BorderRadius.circular(24),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [colors.primaryContainer, colors.surfaceContainerHighest],
+        ),
+        borderRadius: BorderRadius.circular(28),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 58,
-            height: 58,
-            decoration: BoxDecoration(
-              color: colors.primary,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Icon(
-              Icons.account_balance_wallet_outlined,
-              color: colors.onPrimary,
-              size: 29,
+          Row(
+            children: [
+              Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: colors.primary,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Icon(
+                  Icons.account_balance_wallet_outlined,
+                  color: colors.onPrimary,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Gastos',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      count == 1
+                          ? '1 movimiento registrado'
+                          : '$count movimientos registrados',
+                      style: TextStyle(color: colors.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 22),
+          Text(
+            'Total del período',
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: colors.onSurfaceVariant,
+              fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Gastos',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  count == 1
-                      ? '1 gasto registrado'
-                      : '$count gastos registrados',
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  _formatAmount(totalExpenses),
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: colors.primary,
-                  ),
-                ),
-              ],
+          const SizedBox(height: 4),
+          Text(
+            _formatAmount(total),
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.w900,
+              color: colors.primary,
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPeriodFilter(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    const periods = ['Todos', 'Hoy', 'Semana', 'Mes'];
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: periods.map((period) {
+          final selected = _periodFilter == period;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Text(period),
+              selected: selected,
+              onSelected: (_) => setState(() => _periodFilter = period),
+              labelStyle: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: selected ? colors.onPrimary : colors.onSurface,
+              ),
+              selectedColor: colors.primary,
+              backgroundColor: colors.surfaceContainerHighest,
+              side: BorderSide.none,
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildCategorySummary(
+    BuildContext context,
+    List<DocumentSnapshot<Map<String, dynamic>>> expenses,
+  ) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final totals = <String, double>{};
+
+    for (final expense in expenses) {
+      final category = expense.data()?['category']?.toString() ?? 'Otros';
+      totals[category] = (totals[category] ?? 0) + _getAmount(expense);
+    }
+
+    final ordered = totals.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    return Card(
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(color: colors.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Gastos por categoría',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 14),
+            ...ordered.take(4).map(
+                  (entry) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            entry.key,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                        Text(
+                          _formatAmount(entry.value),
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+          ],
+        ),
       ),
     );
   }
@@ -425,16 +531,10 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final data = expense.data();
-
     final description = data?['description']?.toString() ?? '';
     final category = data?['category']?.toString() ?? 'Otros';
     final amount = _getAmount(expense);
-    final date = data?['date'];
-
-    DateTime? expenseDate;
-    if (date is Timestamp) {
-      expenseDate = date.toDate();
-    }
+    final expenseDate = _getExpenseDate(expense);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -451,12 +551,12 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: colors.secondaryContainer,
+                color: colors.errorContainer,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(
-                Icons.receipt_long_outlined,
-                color: colors.onSecondaryContainer,
+                Icons.trending_down_rounded,
+                color: colors.onErrorContainer,
               ),
             ),
             const SizedBox(width: 14),
@@ -515,6 +615,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   _formatAmount(amount),
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w900,
+                    color: colors.error,
                   ),
                 ),
                 PopupMenuButton<String>(
@@ -642,38 +743,32 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final expenses = snapshot.data?.docs.toList() ??
+          final allExpenses = snapshot.data?.docs.toList() ??
               <DocumentSnapshot<Map<String, dynamic>>>[];
 
-          expenses.sort((a, b) {
-            final dateA = a.data()?['date'];
-            final dateB = b.data()?['date'];
-            var parsedA = DateTime(2000);
-            var parsedB = DateTime(2000);
-
-            if (dateA is Timestamp) {
-              parsedA = dateA.toDate();
-            }
-            if (dateB is Timestamp) {
-              parsedB = dateB.toDate();
-            }
-
-            return parsedB.compareTo(parsedA);
+          allExpenses.sort((a, b) {
+            final dateA = _getExpenseDate(a) ?? DateTime(2000);
+            final dateB = _getExpenseDate(b) ?? DateTime(2000);
+            return dateB.compareTo(dateA);
           });
 
-          final totalExpenses = expenses.fold<double>(
+          final filteredExpenses = allExpenses.where((expense) {
+            final date = _getExpenseDate(expense);
+            return date != null && _isInPeriod(date);
+          }).toList();
+
+          final totalExpenses = filteredExpenses.fold<double>(
             0,
             (total, expense) => total + _getAmount(expense),
           );
 
-          if (expenses.isEmpty) {
+          if (allExpenses.isEmpty) {
             return _buildEmptyState(context);
           }
 
           return LayoutBuilder(
             builder: (context, constraints) {
-              final horizontalPadding =
-                  constraints.maxWidth >= 900 ? 32.0 : 16.0;
+              final horizontalPadding = constraints.maxWidth >= 900 ? 32.0 : 16.0;
 
               return ListView(
                 padding: EdgeInsets.fromLTRB(
@@ -683,25 +778,46 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   110,
                 ),
                 children: [
-                  _buildHeader(
+                  _buildSummaryCard(
                     context,
-                    totalExpenses,
-                    expenses.length,
+                    total: totalExpenses,
+                    count: filteredExpenses.length,
                   ),
+                  const SizedBox(height: 18),
+                  _buildPeriodFilter(context),
                   const SizedBox(height: 22),
+                  if (filteredExpenses.isNotEmpty) ...[
+                    _buildCategorySummary(context, filteredExpenses),
+                    const SizedBox(height: 24),
+                  ],
                   Text(
                     'Movimientos de gastos',
                     style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
                   const SizedBox(height: 12),
-                  ...expenses.map(
-                    (expense) => _buildExpenseCard(
-                      context,
-                      expense,
+                  if (filteredExpenses.isEmpty)
+                    Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(22),
+                        side: BorderSide(color: theme.colorScheme.outlineVariant),
+                      ),
+                      child: const Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Center(
+                          child: Text(
+                            'No hay gastos en este período.',
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    ...filteredExpenses.map(
+                      (expense) => _buildExpenseCard(context, expense),
                     ),
-                  ),
                 ],
               );
             },
