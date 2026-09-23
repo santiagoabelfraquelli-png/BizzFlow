@@ -140,6 +140,8 @@ Estado:
 
 **Funcional y probado.**
 
+La pantalla todavía puede recibir mejoras visuales posteriormente.
+
 ---
 
 ## Productos
@@ -179,9 +181,26 @@ Campos:
 * `active`
 * `createdAt`
 
+### Rediseño visual
+
+La pantalla de Productos fue rediseñada visualmente manteniendo la lógica existente.
+
+El rediseño busca:
+
+* Mejor jerarquía visual
+* Tarjetas más modernas
+* Mejor organización de la información
+* Espaciado consistente
+* Iconografía renovada
+* Mejor experiencia en Chrome
+* Diseño responsive
+* Conservación de las operaciones existentes
+
+No se modificó la estructura de datos ni la lógica de Firebase asociada a los productos.
+
 Estado:
 
-**Funcional y probado.**
+**Funcional, probado y visualmente rediseñado.**
 
 ---
 
@@ -220,9 +239,28 @@ Cada item contiene:
 * `unitPrice`
 * `subtotal`
 
+### Rediseño visual
+
+La pantalla de Ventas fue rediseñada visualmente manteniendo la lógica funcional existente.
+
+El rediseño incluye mejoras de:
+
+* Jerarquía visual
+* Carrito
+* Presentación de productos
+* Totales
+* Botones de acción
+* Espaciado
+* Tarjetas
+* Iconografía
+* Responsive
+* Experiencia de usuario
+
+La transacción utilizada para registrar la venta y descontar stock se mantiene sin cambios funcionales.
+
 Estado:
 
-**Funcional y probado.**
+**Funcional, probado y visualmente rediseñado.**
 
 Se comprobó mediante una venta real de prueba que:
 
@@ -248,21 +286,70 @@ Funcionalidades:
 * Agregar stock
 * Actualización mediante transacción Firestore
 
-Estados visuales actuales:
+Estados actuales:
 
 * `<= 0`: Sin stock
-* `<= 5`: Stock bajo
+* `> 0` y `<= 5`: Stock bajo
 * `> 5`: Stock disponible
+
+### Rediseño visual
+
+La pantalla de Stock fue rediseñada visualmente manteniendo toda la lógica existente.
+
+El nuevo diseño incluye:
+
+* Encabezado visual
+* Resumen general del inventario
+* Cantidad total de productos
+* Cantidad de productos disponibles
+* Cantidad de productos con stock bajo
+* Cantidad de productos sin stock
+* Tarjetas modernas para cada producto
+* Indicadores visuales de estado
+* Mejor presentación de cantidad y unidad
+* Botón de agregar stock renovado
+* Modal de agregar stock rediseñado
+* Diseño responsive
+* Adaptación a distintas cantidades de columnas en Chrome
+* Mejor jerarquía visual
+* Sombras y bordes redondeados
+* Iconografía renovada
+
+El rediseño no modifica:
+
+* Firebase
+* Firestore
+* `businessId`
+* Transacciones
+* Estructura de productos
+* Criterio de stock bajo
+* Funcionamiento de agregar stock
+
+### Validación
+
+Después del rediseño se ejecutó:
+
+`flutter analyze`
+
+Resultado:
+
+**Sin problemas.**
+
+También se mantiene pendiente la prueba visual/manual en Chrome después del último cambio para validar la apariencia final.
+
+### Regla de stock bajo
+
+Actualmente se mantiene:
+
+* `0 o menor`: sin stock
+* `1 a 5`: stock bajo
+* `más de 5`: disponible
+
+Este criterio NO debe modificarse salvo solicitud explícita.
 
 Estado:
 
-**Funcional y probado.**
-
-### Nota
-
-Actualmente el Dashboard considera como stock bajo los productos con stock `<= 5`.
-
-Este criterio podrá revisarse posteriormente. No modificarlo hasta realizar una decisión específica sobre el comportamiento deseado.
+**Funcional, probado y visualmente rediseñado.**
 
 ---
 
@@ -301,6 +388,8 @@ Se comprobó:
 * Visualización
 * Edición
 * Eliminación
+
+La pantalla todavía puede recibir mejoras visuales posteriormente.
 
 ---
 
@@ -354,6 +443,8 @@ Se comprobó que los gastos aparecen correctamente en:
 * Gastos
 * Dashboard
 * Caja
+
+La pantalla todavía puede recibir mejoras visuales posteriormente.
 
 ---
 
@@ -448,6 +539,8 @@ También se comprobó mediante una prueba real que:
 La colección `cash_movements` cuenta con reglas de seguridad basadas en `businessId` y propietario del negocio.
 
 No se requieren índices compuestos para las consultas actuales de Caja, ya que el filtrado por `businessId` se realiza directamente y el orden de los movimientos se procesa en la aplicación.
+
+La pantalla todavía puede recibir mejoras visuales posteriormente.
 
 ---
 
@@ -636,7 +729,7 @@ Cuando sea necesario modificar las reglas:
 
 Actualmente:
 
-* `flutter analyze` está sin problemas.
+* `flutter analyze` se encuentra sin problemas después del último cambio realizado.
 * Caja está integrada al panel.
 * Caja puede crear movimientos.
 * Firestore permite guardar movimientos de Caja.
@@ -644,19 +737,46 @@ Actualmente:
 * El MVP completo fue probado mediante un flujo integrado.
 * El Panel principal fue rediseñado y validado.
 * El Dashboard fue rediseñado y validado.
-* La lógica de negocio existente se mantiene sin cambios por el rediseño visual.
-* No se detectaron errores funcionales durante la validación actual.
+* Ventas fue rediseñada visualmente.
+* Productos fue rediseñada visualmente.
+* Stock fue rediseñado visualmente.
+* La lógica de negocio existente se mantiene sin cambios por los rediseños visuales.
+* No se detectaron errores funcionales durante las validaciones realizadas.
 
-### Archivos modificados durante el rediseño actual
+### Estado de rediseño visual
+
+Actualmente las siguientes pantallas cuentan con rediseño visual:
 
 * `lib/screens/business_setup_screen.dart`
 * `lib/screens/dashboard_screen.dart`
+* `lib/screens/sales_screen.dart`
+* `lib/screens/products_screen.dart`
+* `lib/screens/stock_screen.dart`
 
-Estos cambios corresponden principalmente a la mejora visual y de UX del Panel principal y Dashboard.
+Las siguientes pantallas todavía pueden recibir rediseño visual:
 
-No se deben descartar estos cambios antes de realizar el commit correspondiente.
+* `lib/screens/customers_screen.dart`
+* `lib/screens/expenses_screen.dart`
+* `lib/screens/cash_screen.dart`
+* `lib/screens/categories_screen.dart`
 
-No hay que asumir que una nueva funcionalidad está terminada hasta comprobar:
+### Archivos modificados durante la etapa actual de rediseño
+
+* `lib/screens/business_setup_screen.dart`
+* `lib/screens/dashboard_screen.dart`
+* `lib/screens/sales_screen.dart`
+* `lib/screens/products_screen.dart`
+* `lib/screens/stock_screen.dart`
+
+El archivo:
+
+`PROJECT_CONTEXT.md`
+
+también se actualiza para documentar el estado del proyecto.
+
+Los cambios visuales deben conservarse y no deben descartarse antes del commit correspondiente.
+
+No se debe asumir que una nueva funcionalidad está terminada hasta comprobar:
 
 1. `flutter analyze`
 2. Prueba en Chrome
@@ -725,15 +845,39 @@ Se comprobó:
 * Panel principal rediseñado
 * Navegación desde el nuevo panel
 * Dashboard rediseñado
+* Ventas rediseñadas
+* Productos rediseñados
+* Stock rediseñado
 * Visualización de métricas
 * Visualización de stock
 * Diseño responsive
 * Animaciones y efectos visuales
 * Conservación de los datos existentes
+* Conservación de la lógica de Firebase y Firestore
+
+### Validación de Stock
+
+Después del rediseño de `stock_screen.dart` se ejecutó:
+
+`flutter analyze`
+
+Resultado:
+
+**Sin problemas.**
+
+Se verificó que el rediseño conserva:
+
+* Consulta de productos mediante `businessId`
+* Orden alfabético
+* Estado del stock
+* Agregado de stock
+* Transacción Firestore
+* Validación de pertenencia al negocio
+* Mensajes de éxito y error
 
 ### Resultado de la validación
 
-**El MVP actual funciona correctamente en la prueba realizada y cuenta con un primer rediseño visual validado para el Panel principal y Dashboard.**
+**El MVP actual funciona correctamente en las pruebas realizadas y cuenta con un rediseño visual validado para Panel principal, Dashboard, Ventas, Productos y Stock.**
 
 ---
 
@@ -809,7 +953,13 @@ No realizar commits con cambios desconocidos o no relacionados.
 
 El MVP ya fue validado funcionalmente.
 
-El Panel principal y Dashboard también fueron rediseñados y probados.
+Actualmente cuentan con rediseño visual:
+
+- Panel principal
+- Dashboard
+- Ventas
+- Productos
+- Stock
 
 Pendiente inmediato:
 
@@ -823,31 +973,34 @@ Los archivos modificados esperados actualmente son:
 
 - `lib/screens/business_setup_screen.dart`
 - `lib/screens/dashboard_screen.dart`
+- `lib/screens/sales_screen.dart`
+- `lib/screens/products_screen.dart`
+- `lib/screens/stock_screen.dart`
 - `PROJECT_CONTEXT.md`
 
 ---
 
 ## Paso 2 — Continuar el rediseño visual
 
-Una vez guardado el estado actual, se puede continuar con el rediseño visual de otros módulos.
+Una vez guardado el estado actual, continuar con el rediseño visual de los módulos restantes.
 
-La prioridad será mejorar progresivamente la interfaz sin alterar innecesariamente:
+Orden sugerido:
 
-- Firebase
-- Firestore
-- reglas de seguridad
-- estructura de datos
-- lógica de negocio
-- navegación
-- `businessId`
+1. Clientes
+2. Gastos
+3. Caja
+4. Categorías
+5. Pantallas secundarias
 
 Cada pantalla deberá validarse individualmente antes de continuar con la siguiente.
+
+El objetivo es mantener una identidad visual consistente entre todos los módulos.
 
 ---
 
 ## Paso 3 — Evaluar ajustes del MVP
 
-Después de dejar esta versión guardada, evaluar únicamente mejoras que aporten valor real.
+Después de completar el rediseño visual, evaluar únicamente mejoras que aporten valor real.
 
 Un posible ajuste identificado durante las pruebas es revisar el criterio de:
 
@@ -873,6 +1026,8 @@ Probar BizzFlow con un negocio pequeño real para detectar:
 - Procesos tediosos
 - Problemas de usabilidad
 - Necesidades reales del negocio
+
+La prueba con usuarios reales debe utilizarse para decidir qué funcionalidades agregar posteriormente.
 
 ---
 
@@ -904,6 +1059,24 @@ No agregar todavía:
 La prioridad actual es:
 
 **tener una aplicación pequeña, funcional, visualmente clara y utilizable rápidamente para probarla con negocios reales.**
+
+La etapa actual se centra principalmente en:
+
+**UI/UX + consistencia visual + validación del MVP.**
+
+```
+
+### Ahora
+
+Reemplazá **todo** el `PROJECT_CONTEXT.md` con ese contenido.
+
+Después ejecutá solamente:
+
+```powershell
+git status
+```
+
+**Todavía no hagas commit ni push.** Primero vemos qué archivos aparecen y comprobamos que sean exactamente los esperados.
 
 ```
 

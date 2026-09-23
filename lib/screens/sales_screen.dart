@@ -35,7 +35,6 @@ class _CartItem {
 
 class _SalesScreenState extends State<SalesScreen> {
   final Map<String, _CartItem> _cart = {};
-
   bool _isSaving = false;
 
   CollectionReference<Map<String, dynamic>> get _productsRef =>
@@ -58,7 +57,6 @@ class _SalesScreenState extends State<SalesScreen> {
 
     final name = data['name'] as String? ?? 'Sin nombre';
     final unit = data['unit'] as String? ?? 'unidad';
-
     final priceValue = data['price'];
     final stockValue = data['stock'];
 
@@ -150,14 +148,12 @@ class _SalesScreenState extends State<SalesScreen> {
 
       await FirebaseFirestore.instance.runTransaction(
         (transaction) async {
-          final productSnapshots = <String,
-              DocumentSnapshot<Map<String, dynamic>>>{};
+          final productSnapshots =
+              <String, DocumentSnapshot<Map<String, dynamic>>>{};
 
           for (final item in cartItems) {
             final productRef = _productsRef.doc(item.productId);
-
             final productSnapshot = await transaction.get(productRef);
-
             productSnapshots[item.productId] = productSnapshot;
           }
 
@@ -214,7 +210,8 @@ class _SalesScreenState extends State<SalesScreen> {
             if (item.quantity > currentStock) {
               throw Exception(
                 'No hay suficiente stock de "${item.productName}". '
-                'Stock disponible: ${currentStock.toString()} ${item.unit}.',
+                'Stock disponible: '
+                '${currentStock.toString()} ${item.unit}.',
               );
             }
 
@@ -291,6 +288,7 @@ class _SalesScreenState extends State<SalesScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
+        behavior: SnackBarBehavior.floating,
         content: Text(message),
       ),
     );
@@ -304,11 +302,52 @@ class _SalesScreenState extends State<SalesScreen> {
     return value.toStringAsFixed(2);
   }
 
+  Color _stockColor(double stock) {
+    if (stock <= 0) {
+      return Colors.red;
+    }
+
+    if (stock <= 5) {
+      return Colors.orange;
+    }
+
+    return Colors.green;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
+      backgroundColor: const Color(0xFFF6F7FB),
       appBar: AppBar(
-        title: const Text('Ventas'),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        titleSpacing: 20,
+        title: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(13),
+              ),
+              child: Icon(
+                Icons.point_of_sale_rounded,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Ventas',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
       ),
       body: Column(
         children: [
@@ -321,8 +360,7 @@ class _SalesScreenState extends State<SalesScreen> {
                   )
                   .snapshots(),
               builder: (context, snapshot) {
-                if (snapshot.connectionState ==
-                    ConnectionState.waiting) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
                     child: CircularProgressIndicator(),
                   );
@@ -330,12 +368,36 @@ class _SalesScreenState extends State<SalesScreen> {
 
                 if (snapshot.hasError) {
                   return Center(
-                    child: Padding(
+                    child: Container(
+                      margin: const EdgeInsets.all(24),
                       padding: const EdgeInsets.all(24),
-                      child: Text(
-                        'Error al cargar productos:\n'
-                        '${snapshot.error}',
-                        textAlign: TextAlign.center,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.error_outline_rounded,
+                            size: 48,
+                            color: theme.colorScheme.error,
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'No se pudieron cargar los productos',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '${snapshot.error}',
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
                       ),
                     ),
                   );
@@ -344,10 +406,8 @@ class _SalesScreenState extends State<SalesScreen> {
                 final documents = snapshot.data?.docs.toList() ?? [];
 
                 documents.sort((a, b) {
-                  final nameA =
-                      a.data()['name'] as String? ?? '';
-                  final nameB =
-                      b.data()['name'] as String? ?? '';
+                  final nameA = a.data()['name'] as String? ?? '';
+                  final nameB = b.data()['name'] as String? ?? '';
 
                   return nameA
                       .toLowerCase()
@@ -355,172 +415,409 @@ class _SalesScreenState extends State<SalesScreen> {
                 });
 
                 if (documents.isEmpty) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Text(
-                        'Todavía no tenés productos.\n\n'
-                        'Creá productos antes de registrar una venta.',
-                        textAlign: TextAlign.center,
+                  return Center(
+                    child: Container(
+                      constraints: const BoxConstraints(
+                        maxWidth: 500,
+                      ),
+                      margin: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(32),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 76,
+                            height: 76,
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary
+                                  .withValues(alpha: 0.10),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.inventory_2_outlined,
+                              size: 38,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          const Text(
+                            'Todavía no tenés productos',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Creá productos antes de registrar una venta.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   );
                 }
 
-                return ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: documents.length,
-                  separatorBuilder: (_, _) =>
-                      const SizedBox(height: 10),
-                  itemBuilder: (context, index) {
-                    final document = documents[index];
-                    final data = document.data();
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isWide = constraints.maxWidth >= 800;
 
-                    final name =
-                        data['name'] as String? ?? 'Sin nombre';
-                    final category =
-                        data['categoryName'] as String? ??
-                            'Sin categoría';
-                    final unit =
-                        data['unit'] as String? ?? 'unidad';
-
-                    final priceValue = data['price'];
-                    final stockValue = data['stock'];
-
-                    final price = priceValue is num
-                        ? priceValue.toDouble()
-                        : 0.0;
-
-                    final stock = stockValue is num
-                        ? stockValue.toDouble()
-                        : 0.0;
-
-                    final active = data['active'] != false;
-
-                    return Card(
-                      child: ListTile(
-                        leading: const CircleAvatar(
-                          child: Icon(
-                            Icons.inventory_2_outlined,
-                          ),
+                    if (isWide) {
+                      return GridView.builder(
+                        padding: const EdgeInsets.fromLTRB(
+                          24,
+                          12,
+                          24,
+                          24,
                         ),
-                        title: Text(
-                          name,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        gridDelegate:
+                            SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 430,
+                          mainAxisExtent: 190,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
                         ),
-                        subtitle: Text(
-                          '$category\n'
-                          'Precio: \$${price.toStringAsFixed(2)}\n'
-                          'Stock: ${_formatStock(stock)} $unit',
-                        ),
-                        isThreeLine: true,
-                        trailing: FilledButton(
-                          onPressed: !active || stock <= 0 || _isSaving
-                              ? null
-                              : () => _addProductToCart(
-                                    document,
-                                  ),
-                          child: const Text('Agregar'),
-                        ),
+                        itemCount: documents.length,
+                        itemBuilder: (context, index) {
+                          return _buildProductCard(
+                            documents[index],
+                            theme,
+                          );
+                        },
+                      );
+                    }
+
+                    return ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(
+                        16,
+                        12,
+                        16,
+                        24,
                       ),
+                      itemCount: documents.length,
+                      separatorBuilder: (_, _) =>
+                          const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        return _buildProductCard(
+                          documents[index],
+                          theme,
+                        );
+                      },
                     );
                   },
                 );
               },
             ),
           ),
-          if (_cart.isNotEmpty) _buildCart(),
+          if (_cart.isNotEmpty) _buildCart(theme),
         ],
       ),
     );
   }
 
-  Widget _buildCart() {
+  Widget _buildProductCard(
+    QueryDocumentSnapshot<Map<String, dynamic>> document,
+    ThemeData theme,
+  ) {
+    final data = document.data();
+
+    final name = data['name'] as String? ?? 'Sin nombre';
+    final category =
+        data['categoryName'] as String? ?? 'Sin categoría';
+    final unit = data['unit'] as String? ?? 'unidad';
+
+    final priceValue = data['price'];
+    final stockValue = data['stock'];
+
+    final price = priceValue is num
+        ? priceValue.toDouble()
+        : 0.0;
+
+    final stock = stockValue is num
+        ? stockValue.toDouble()
+        : 0.0;
+
+    final active = data['active'] != false;
+    final alreadyInCart = _cart.containsKey(document.id);
+    final stockColor = _stockColor(stock);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.black.withValues(alpha: 0.05),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Row(
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary
+                    .withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(
+                Icons.inventory_2_rounded,
+                color: theme.colorScheme.primary,
+                size: 28,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    category,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const Spacer(),
+                  Row(
+                    children: [
+                      Text(
+                        '\$${price.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 9,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: stockColor.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          'Stock: ${_formatStock(stock)} $unit',
+                          style: TextStyle(
+                            color: stockColor,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            SizedBox(
+              height: 42,
+              child: FilledButton.icon(
+                onPressed: !active || stock <= 0 || _isSaving
+                    ? null
+                    : () => _addProductToCart(document),
+                icon: Icon(
+                  alreadyInCart
+                      ? Icons.add_circle_outline_rounded
+                      : Icons.add_rounded,
+                  size: 18,
+                ),
+                label: Text(
+                  alreadyInCart ? 'Sumar' : 'Agregar',
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCart(ThemeData theme) {
     return Material(
-      elevation: 8,
+      elevation: 16,
+      color: Colors.white,
       child: SafeArea(
         top: false,
         child: Container(
           width: double.infinity,
+          constraints: const BoxConstraints(
+            maxHeight: 310,
+          ),
           padding: const EdgeInsets.fromLTRB(
+            20,
             16,
-            12,
-            16,
-            16,
+            20,
+            18,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary
+                          .withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                    child: Icon(
+                      Icons.shopping_cart_rounded,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
                   const Expanded(
                     child: Text(
                       'Venta actual',
                       style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ),
-                  Text(
-                    '\$${_total.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        'TOTAL',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.grey.shade600,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                      Text(
+                        '\$${_total.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontSize: 21,
+                          fontWeight: FontWeight.w900,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              ..._cart.values.map(
-                (item) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 4,
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            '${item.productName} '
-                            '(${item.quantity} ${item.unit})',
-                          ),
-                        ),
-                        Text(
-                          '\$${item.subtotal.toStringAsFixed(2)}',
-                        ),
-                        IconButton(
-                          tooltip: 'Quitar',
-                          onPressed: _isSaving
-                              ? null
-                              : () => _removeFromCart(
-                                    item.productId,
+              const SizedBox(height: 12),
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: _cart.length,
+                  separatorBuilder: (_, _) =>
+                      Divider(
+                        height: 1,
+                        color: Colors.grey.shade200,
+                      ),
+                  itemBuilder: (context, index) {
+                    final item = _cart.values.elementAt(index);
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 8,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment:
+                                  CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item.productName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
                                   ),
-                          icon: const Icon(
-                            Icons.delete_outline,
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  '${item.quantity} ${item.unit} × '
+                                  '\$${item.unitPrice.toStringAsFixed(2)}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                          Text(
+                            '\$${item.subtotal.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: 'Quitar',
+                            onPressed: _isSaving
+                                ? null
+                                : () => _removeFromCart(
+                                      item.productId,
+                                    ),
+                            icon: const Icon(
+                              Icons.delete_outline_rounded,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               SizedBox(
                 width: double.infinity,
+                height: 48,
                 child: FilledButton.icon(
                   onPressed: _isSaving ? null : _confirmSale,
                   icon: _isSaving
                       ? const SizedBox(
-                          width: 18,
-                          height: 18,
+                          width: 19,
+                          height: 19,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
                           ),
                         )
-                      : const Icon(Icons.check),
+                      : const Icon(
+                          Icons.check_circle_outline_rounded,
+                        ),
                   label: Text(
                     _isSaving
                         ? 'Registrando...'
