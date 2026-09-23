@@ -8,6 +8,7 @@ import './customers_screen.dart';
 import './dashboard_screen.dart';
 import './expenses_screen.dart';
 import './products_screen.dart';
+import './profile_screen.dart';
 import './sales_history_screen.dart';
 import './sales_screen.dart';
 import './stock_screen.dart';
@@ -22,8 +23,8 @@ class BusinessSetupScreen extends StatefulWidget {
 class _BusinessSetupScreenState extends State<BusinessSetupScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final TextEditingController _businessNameController =
-      TextEditingController();
+  final TextEditingController _businessNameController = TextEditingController();
+
   bool _isCreating = false;
 
   @override
@@ -37,6 +38,7 @@ class _BusinessSetupScreenState extends State<BusinessSetupScreen> {
     if (user == null) return;
 
     final businessName = _businessNameController.text.trim();
+
     if (businessName.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Ingresá el nombre de tu negocio.')),
@@ -45,17 +47,21 @@ class _BusinessSetupScreenState extends State<BusinessSetupScreen> {
     }
 
     setState(() => _isCreating = true);
+
     try {
       final businessRef = _firestore.collection('businesses').doc();
+
       await businessRef.set({
         'name': businessName,
         'ownerId': user.uid,
         'createdAt': FieldValue.serverTimestamp(),
       });
+
       await _firestore.collection('users').doc(user.uid).set(
         {'businessId': businessRef.id},
         SetOptions(merge: true),
       );
+
       if (mounted) setState(() {});
     } catch (e) {
       if (!mounted) return;
@@ -70,6 +76,7 @@ class _BusinessSetupScreenState extends State<BusinessSetupScreen> {
   @override
   Widget build(BuildContext context) {
     final user = _auth.currentUser;
+
     if (user == null) {
       return const Scaffold(
         body: Center(child: Text('No hay una sesión iniciada.')),
@@ -86,6 +93,7 @@ class _BusinessSetupScreenState extends State<BusinessSetupScreen> {
         }
 
         final businessId = snapshot.data?.data()?['businessId']?.toString();
+
         if (businessId == null || businessId.isEmpty) {
           return _buildSetup(context);
         }
@@ -97,6 +105,7 @@ class _BusinessSetupScreenState extends State<BusinessSetupScreen> {
 
   Widget _buildSetup(BuildContext context) {
     final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Configurar negocio')),
       body: Center(
@@ -197,6 +206,7 @@ class BusinessHomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+
     final modules = <_ModuleItem>[
       _ModuleItem(
         title: 'Dashboard',
@@ -288,6 +298,16 @@ class BusinessHomeScreen extends StatelessWidget {
           ExpensesScreen(businessId: businessId),
         ),
       ),
+      _ModuleItem(
+        title: 'Mi perfil',
+        subtitle: 'Datos y seguridad de tu cuenta',
+        icon: Icons.person_rounded,
+        color: Colors.cyan,
+        onTap: () => _openModule(
+          context,
+          ProfileScreen(businessId: businessId),
+        ),
+      ),
     ];
 
     return Scaffold(
@@ -325,6 +345,7 @@ class BusinessHomeScreen extends StatelessWidget {
       body: LayoutBuilder(
         builder: (context, constraints) {
           final horizontalPadding = constraints.maxWidth >= 900 ? 40.0 : 20.0;
+
           return SingleChildScrollView(
             padding: EdgeInsets.fromLTRB(
               horizontalPadding,
@@ -358,8 +379,7 @@ class BusinessHomeScreen extends StatelessWidget {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: modules.length,
-                  gridDelegate:
-                      const SliverGridDelegateWithMaxCrossAxisExtent(
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                     maxCrossAxisExtent: 340,
                     mainAxisExtent: 178,
                     crossAxisSpacing: 16,
@@ -535,9 +555,7 @@ class _ModuleCardState extends State<_ModuleCard> {
                       const Spacer(),
                       AnimatedSlide(
                         duration: const Duration(milliseconds: 180),
-                        offset: _isHovered
-                            ? const Offset(0.12, 0)
-                            : Offset.zero,
+                        offset: _isHovered ? const Offset(0.12, 0) : Offset.zero,
                         child: Icon(
                           Icons.arrow_forward_rounded,
                           color: _isHovered
