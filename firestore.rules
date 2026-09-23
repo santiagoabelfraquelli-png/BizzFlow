@@ -107,11 +107,11 @@ service cloud.firestore {
                          /databases/$(database)/documents/businesses/$(request.resource.data.businessId)
                        ).data.ownerId == request.auth.uid;
 
-      allow read: if request.auth != null
-                  && resource.data.businessId != null
-                  && get(
-                       /databases/$(database)/documents/businesses/$(resource.data.businessId)
-                     ).data.ownerId == request.auth.uid;
+     allow read, delete: if request.auth != null
+                     && resource.data.businessId != null
+                     && get(
+                          /databases/$(database)/documents/businesses/$(resource.data.businessId)
+                        ).data.ownerId == request.auth.uid;
     }
   }
 }

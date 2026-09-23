@@ -1,4 +1,4 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class ProductsScreen extends StatefulWidget {
@@ -33,10 +33,24 @@ class _ProductsScreenState extends State<ProductsScreen> {
   CollectionReference<Map<String, dynamic>> get _stockMovements =>
       FirebaseFirestore.instance.collection('stock_movements');
 
-  static const Color _primary = Color(0xFF6C63FF);
-  static const Color _background = Color(0xFFF7F7FB);
-  static const Color _textPrimary = Color(0xFF202124);
-  static const Color _textSecondary = Color(0xFF737373);
+  Color get _primary => Theme.of(context).colorScheme.primary;
+  Color get _background => Theme.of(context).colorScheme.surface;
+  Color get _cardColor => Theme.of(context).colorScheme.surfaceContainerLow;
+  Color get _textPrimary => Theme.of(context).colorScheme.onSurface;
+  Color get _textSecondary => Theme.of(context).colorScheme.onSurfaceVariant;
+
+  Color get _actionBackground {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+
+    // En modo oscuro mantenemos exactamente el mismo color del tema,
+    // pero lo oscurecemos para que conserve la identidad visual.
+    return theme.brightness == Brightness.dark
+        ? Color.lerp(primary, Colors.black, 0.35)!
+        : primary;
+  }
+
+  Color get _actionForeground => Colors.white;
 
   @override
   void dispose() {
@@ -228,7 +242,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
-          title: Text('Agregar stock', style: const TextStyle(fontWeight: FontWeight.w800)),
+          title: Text('Agregar stock', style: TextStyle(fontWeight: FontWeight.w800)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -236,7 +250,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   '$productName · Stock actual: ${_formatNumber(currentStock)} $unit',
-                  style: const TextStyle(color: _textSecondary),
+                  style: TextStyle(color: _textSecondary),
                 ),
               ),
               const SizedBox(height: 16),
@@ -246,7 +260,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 decoration: InputDecoration(
                   labelText: 'Cantidad a agregar',
-                  prefixIcon: const Icon(Icons.add_box_outlined),
+                  prefixIcon: Icon(Icons.add_box_outlined),
                   filled: true,
                   fillColor: _background,
                   border: OutlineInputBorder(
@@ -262,7 +276,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 decoration: InputDecoration(
                   labelText: 'Nota (opcional)',
                   hintText: 'Ej: Compra al proveedor',
-                  prefixIcon: const Icon(Icons.notes_outlined),
+                  prefixIcon: Icon(Icons.notes_outlined),
                   filled: true,
                   fillColor: _background,
                   border: OutlineInputBorder(
@@ -276,10 +290,13 @@ class _ProductsScreenState extends State<ProductsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancelar'),
+              child: Text('Cancelar'),
             ),
             FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: _primary),
+              style: FilledButton.styleFrom(
+                backgroundColor: _actionBackground,
+                foregroundColor: _actionForeground,
+              ),
               onPressed: () {
                 final quantity = double.tryParse(
                   controller.text.trim().replaceAll(',', '.'),
@@ -292,7 +309,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   'note': noteController.text.trim(),
                 });
               },
-              child: const Text('Agregar'),
+              child: Text('Agregar'),
             ),
           ],
         );
@@ -380,7 +397,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(22),
           ),
-          title: const Text(
+          title: Text(
             'Eliminar producto',
             style: TextStyle(fontWeight: FontWeight.w800),
           ),
@@ -390,7 +407,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancelar'),
+              child: Text('Cancelar'),
             ),
             FilledButton(
               style: FilledButton.styleFrom(
@@ -398,7 +415,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Eliminar'),
+              child: Text('Eliminar'),
             ),
           ],
         );
@@ -465,7 +482,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                               color: _primary.withValues(alpha: 0.10),
                               borderRadius: BorderRadius.circular(16),
                             ),
-                            child: const Icon(Icons.inventory_2_outlined, color: _primary),
+                            child: Icon(Icons.inventory_2_outlined, color: _primary),
                           ),
                           const SizedBox(width: 14),
                           Expanded(
@@ -474,26 +491,26 @@ class _ProductsScreenState extends State<ProductsScreen> {
                               children: [
                                 Text(
                                   isEditing ? 'Editar producto' : 'Nuevo producto',
-                                  style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
+                                  style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
                                 ),
                                 const SizedBox(height: 3),
                                 Text(
                                   isEditing
                                       ? 'Actualizá la información del producto'
                                       : 'Completá los datos del producto',
-                                  style: const TextStyle(color: _textSecondary, fontSize: 13),
+                                  style: TextStyle(color: _textSecondary, fontSize: 13),
                                 ),
                               ],
                             ),
                           ),
                           IconButton(
                             onPressed: _isSaving ? null : () => Navigator.of(dialogContext).pop(),
-                            icon: const Icon(Icons.close),
+                            icon: Icon(Icons.close),
                           ),
                         ],
                       ),
                       const SizedBox(height: 24),
-                      const Text('Información', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                      Text('Información', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
                       const SizedBox(height: 12),
                       _textField(
                         controller: _nameController,
@@ -505,7 +522,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       const SizedBox(height: 14),
                       _categoryField(setDialogState),
                       const SizedBox(height: 24),
-                      const Text('Valores', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                      Text('Valores', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
                       const SizedBox(height: 12),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -551,12 +568,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
                         const SizedBox(height: 14),
                         SwitchListTile.adaptive(
                           contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-                          title: const Text('Producto activo', style: TextStyle(fontWeight: FontWeight.w700)),
+                          title: Text('Producto activo', style: TextStyle(fontWeight: FontWeight.w700)),
                           subtitle: Text(
                             _selectedActive
                                 ? 'Disponible para nuevas ventas'
                                 : 'Oculto para nuevas ventas',
-                            style: const TextStyle(color: _textSecondary),
+                            style: TextStyle(color: _textSecondary),
                           ),
                           value: _selectedActive,
                           activeThumbColor: _primary,
@@ -573,7 +590,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                 minimumSize: const Size.fromHeight(52),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                               ),
-                              child: const Text('Cancelar'),
+                              child: Text('Cancelar'),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -585,8 +602,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                       ? _updateProduct(productId!)
                                       : _saveNewProduct(),
                               style: FilledButton.styleFrom(
-                                backgroundColor: _primary,
-                                foregroundColor: Colors.white,
+                                backgroundColor: _actionBackground,
+                                foregroundColor: _actionForeground,
                                 minimumSize: const Size.fromHeight(52),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                               ),
@@ -598,7 +615,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                     )
                                   : Text(
                                       isEditing ? 'Guardar cambios' : 'Crear producto',
-                                      style: const TextStyle(fontWeight: FontWeight.w700),
+                                      style: TextStyle(fontWeight: FontWeight.w700),
                                     ),
                             ),
                           ),
@@ -630,7 +647,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
         if (snapshot.hasError) {
           return Text(
             'Error al cargar categorías:\n${snapshot.error}',
-            style: const TextStyle(color: Colors.redAccent),
+            style: TextStyle(color: Colors.redAccent),
           );
         }
 
@@ -666,7 +683,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
         return DropdownButtonFormField<String>(
           initialValue: validSelectedId,
           decoration: _inputDecoration('Categoría', Icons.category_outlined),
-          items: categories.map((document) {
+          items: categories.map<DropdownMenuItem<String>>((document) {
             final name = document.data()['name'] as String? ?? 'Sin nombre';
             return DropdownMenuItem<String>(value: document.id, child: Text(name));
           }).toList(),
@@ -700,7 +717,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: _primary, width: 1.5),
+        borderSide: BorderSide(color: _primary, width: 1.5),
       ),
     );
   }
@@ -746,7 +763,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
         backgroundColor: _background,
         surfaceTintColor: Colors.transparent,
         titleSpacing: 20,
-        title: const Column(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
@@ -766,11 +783,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
             child: IconButton(
               onPressed: _showCreateProductDialog,
               style: IconButton.styleFrom(
-                backgroundColor: _primary,
-                foregroundColor: Colors.white,
+                backgroundColor: _actionBackground,
+                foregroundColor: _actionForeground,
                 minimumSize: const Size(46, 46),
               ),
-              icon: const Icon(Icons.add),
+              icon: Icon(Icons.add),
               tooltip: 'Nuevo producto',
             ),
           ),
@@ -778,11 +795,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showCreateProductDialog,
-        backgroundColor: _primary,
-        foregroundColor: Colors.white,
+        backgroundColor: _actionBackground,
+        foregroundColor: _actionForeground,
         elevation: 4,
-        icon: const Icon(Icons.add),
-        label: const Text('Nuevo producto', style: TextStyle(fontWeight: FontWeight.w700)),
+        icon: Icon(Icons.add),
+        label: Text('Nuevo producto', style: TextStyle(fontWeight: FontWeight.w700)),
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: _products.where('businessId', isEqualTo: widget.businessId).snapshots(),
@@ -833,7 +850,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     isWide,
                   ),
                   const SizedBox(height: 22),
-                  const Text(
+                  Text(
                     'Catálogo',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _textPrimary),
                   ),
@@ -873,19 +890,19 @@ class _ProductsScreenState extends State<ProductsScreen> {
         padding: const EdgeInsets.all(24),
         child: Container(
           padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+          decoration: BoxDecoration(color: _cardColor, borderRadius: BorderRadius.circular(24)),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.error_outline, size: 48, color: Colors.redAccent.shade100),
               const SizedBox(height: 14),
-              const Text(
+              Text(
                 'No se pudieron cargar los productos',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 8),
-              Text(error, textAlign: TextAlign.center, style: const TextStyle(color: _textSecondary)),
+              Text(error, textAlign: TextAlign.center, style: TextStyle(color: _textSecondary)),
             ],
           ),
         ),
@@ -904,16 +921,16 @@ class _ProductsScreenState extends State<ProductsScreen> {
               width: 96,
               height: 96,
               decoration: BoxDecoration(color: _primary.withValues(alpha: 0.10), shape: BoxShape.circle),
-              child: const Icon(Icons.inventory_2_outlined, size: 44, color: _primary),
+              child: Icon(Icons.inventory_2_outlined, size: 44, color: _primary),
             ),
             const SizedBox(height: 22),
-            const Text(
+            Text(
               'Todavía no tenés productos',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800, color: _textPrimary),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Creá tu primer producto para empezar a administrar tu catálogo y stock.',
               textAlign: TextAlign.center,
               style: TextStyle(color: _textSecondary, height: 1.5),
@@ -922,13 +939,13 @@ class _ProductsScreenState extends State<ProductsScreen> {
             FilledButton.icon(
               onPressed: _showCreateProductDialog,
               style: FilledButton.styleFrom(
-                backgroundColor: _primary,
-                foregroundColor: Colors.white,
+                backgroundColor: _actionBackground,
+                foregroundColor: _actionForeground,
                 padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 15),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
-              icon: const Icon(Icons.add),
-              label: const Text('Crear producto', style: TextStyle(fontWeight: FontWeight.w700)),
+              icon: Icon(Icons.add),
+              label: Text('Crear producto', style: TextStyle(fontWeight: FontWeight.w700)),
             ),
           ],
         ),
@@ -1005,7 +1022,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _cardColor,
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.035), blurRadius: 18, offset: const Offset(0, 6)),
@@ -1024,10 +1041,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(color: _textSecondary, fontSize: 12, fontWeight: FontWeight.w600)),
+                Text(title, style: TextStyle(color: _textSecondary, fontSize: 12, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 2),
-                Text(value, style: const TextStyle(color: _textPrimary, fontSize: 22, fontWeight: FontWeight.w800)),
-                Text(subtitle, style: const TextStyle(color: _textSecondary, fontSize: 11)),
+                Text(value, style: TextStyle(color: _textPrimary, fontSize: 22, fontWeight: FontWeight.w800)),
+                Text(subtitle, style: TextStyle(color: _textSecondary, fontSize: 11)),
               ],
             ),
           ),
@@ -1063,7 +1080,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _cardColor,
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.035), blurRadius: 18, offset: const Offset(0, 6)),
@@ -1093,14 +1110,14 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _textPrimary),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _textPrimary),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       category,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: _textSecondary, fontSize: 12),
+                      style: TextStyle(color: _textSecondary, fontSize: 12),
                     ),
                   ],
                 ),
@@ -1162,7 +1179,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     ),
                   ),
                 ],
-                child: const Icon(Icons.more_vert, color: _textSecondary),
+                child: Icon(Icons.more_vert, color: _textSecondary),
               ),
             ],
           ),
@@ -1227,15 +1244,15 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.history, color: _primary),
+                      Icon(Icons.history, color: _primary),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: Text(productName, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+                        child: Text(productName, style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
                       ),
-                      IconButton(onPressed: () => Navigator.of(dialogContext).pop(), icon: const Icon(Icons.close)),
+                      IconButton(onPressed: () => Navigator.of(dialogContext).pop(), icon: Icon(Icons.close)),
                     ],
                   ),
-                  const Align(
+                  Align(
                     alignment: Alignment.centerLeft,
                     child: Text('Movimientos de stock', style: TextStyle(color: _textSecondary)),
                   ),
@@ -1306,18 +1323,18 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+                                        Text(title, style: TextStyle(fontWeight: FontWeight.w700)),
                                         const SizedBox(height: 3),
                                         Text(
                                           data['note'] as String? ?? '',
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(color: _textSecondary, fontSize: 12),
+                                          style: TextStyle(color: _textSecondary, fontSize: 12),
                                         ),
                                         if (date != null)
                                           Text(
                                             _formatDateTime(date),
-                                            style: const TextStyle(color: _textSecondary, fontSize: 11),
+                                            style: TextStyle(color: _textSecondary, fontSize: 11),
                                           ),
                                       ],
                                     ),
@@ -1331,7 +1348,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                         style: TextStyle(color: color, fontWeight: FontWeight.w800),
                                       ),
                                       const SizedBox(height: 3),
-                                      Text('Stock: ${_formatNumber(stockAfter)}', style: const TextStyle(color: _textSecondary, fontSize: 11)),
+                                      Text('Stock: ${_formatNumber(stockAfter)}', style: TextStyle(color: _textSecondary, fontSize: 11)),
                                     ],
                                   ),
                                 ],
@@ -1382,13 +1399,13 @@ class _ProductsScreenState extends State<ProductsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(color: _textSecondary, fontSize: 10)),
+                Text(label, style: TextStyle(color: _textSecondary, fontSize: 10)),
                 const SizedBox(height: 2),
                 Text(
                   value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: _textPrimary, fontSize: 12, fontWeight: FontWeight.w700),
+                  style: TextStyle(color: _textPrimary, fontSize: 12, fontWeight: FontWeight.w700),
                 ),
               ],
             ),

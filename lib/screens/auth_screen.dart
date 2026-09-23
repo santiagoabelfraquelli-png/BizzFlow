@@ -1,8 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import 'package:bizzflow/services/app_preferences.dart';
+
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({super.key});
+  final AppPreferences appPreferences;
+
+  const AuthScreen({super.key, required this.appPreferences});
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -16,12 +20,24 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _isLogin = true;
   bool _isLoading = false;
   bool _obscurePassword = true;
+  late bool _rememberLogin;
+
+  @override
+  void initState() {
+    super.initState();
+    _rememberLogin = widget.appPreferences.rememberLogin;
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _setRememberLogin(bool value) async {
+    setState(() => _rememberLogin = value);
+    await widget.appPreferences.setRememberLogin(value);
   }
 
   Future<void> _submit() async {
@@ -34,11 +50,13 @@ class _AuthScreenState extends State<AuthScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
+        await widget.appPreferences.setRememberLogin(_rememberLogin);
       } else {
         final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
+        await widget.appPreferences.setRememberLogin(_rememberLogin);
         await credential.user?.sendEmailVerification();
         if (mounted) {
           _showMessage('Cuenta creada. Te enviamos un correo para verificar tu dirección.');
@@ -62,7 +80,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
     try {
       await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-      if (mounted) _showMessage('Te enviamos un correo para restablecer tu contraseña.');
+      if (mounted) _showMessage('Te enviamos un correo para restablecer la contraseña.');
     } on FirebaseAuthException catch (e) {
       if (mounted) _showMessage(_authErrorMessage(e.code), isError: true);
     }
@@ -70,16 +88,25 @@ class _AuthScreenState extends State<AuthScreen> {
 
   String _authErrorMessage(String code) {
     switch (code) {
-      case 'invalid-email': return 'El correo electrónico no es válido.';
-      case 'user-not-found': return 'No existe una cuenta con ese correo.';
+      case 'invalid-email':
+        return 'El correo electrónico no es válido.';
+      case 'user-not-found':
+        return 'No existe una cuenta con ese correo.';
       case 'wrong-password':
-      case 'invalid-credential': return 'El correo o la contraseña son incorrectos.';
-      case 'email-already-in-use': return 'Ya existe una cuenta con ese correo.';
-      case 'weak-password': return 'La contraseña debe tener al menos 6 caracteres.';
-      case 'too-many-requests': return 'Demasiados intentos. Esperá unos minutos y probá nuevamente.';
-      case 'network-request-failed': return 'No hay conexión con Internet.';
-      case 'user-disabled': return 'Esta cuenta fue deshabilitada.';
-      default: return 'No se pudo completar la operación. Intentá nuevamente.';
+      case 'invalid-credential':
+        return 'El correo o la contraseña son incorrectos.';
+      case 'email-already-in-use':
+        return 'Ya existe una cuenta con ese correo.';
+      case 'weak-password':
+        return 'La contraseña debe tener al menos 6 caracteres.';
+      case 'too-many-requests':
+        return 'Demasiados intentos. Esperá unos minutos y probá nuevamente.';
+      case 'network-request-failed':
+        return 'No hay conexión con Internet.';
+      case 'user-disabled':
+        return 'Esta cuenta fue deshabilitada.';
+      default:
+        return 'No se pudo completar la operación. Intentá nuevamente.';
     }
   }
 
@@ -92,6 +119,7 @@ class _AuthScreenState extends State<AuthScreen> {
           content: Text(message),
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(16),
+          backgroundColor: isError ? Theme.of(context).colorScheme.error : null,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
       );
@@ -106,29 +134,38 @@ class _AuthScreenState extends State<AuthScreen> {
     });
   }
 
-  InputDecoration _inputDecoration({required String label, required IconData icon, Widget? suffixIcon}) {
+  InputDecoration _inputDecoration({
+    required String label,
+    required IconData icon,
+    Widget? suffixIcon,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return InputDecoration(
       labelText: label,
       prefixIcon: Icon(icon),
       suffixIcon: suffixIcon,
       filled: true,
-      fillColor: Colors.grey.shade50,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+      fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
+      ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Colors.grey.shade200),
+        borderSide: BorderSide(color: colorScheme.outlineVariant),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.5),
+        borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Theme.of(context).colorScheme.error),
+        borderSide: BorderSide(color: colorScheme.error),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Theme.of(context).colorScheme.error, width: 1.5),
+        borderSide: BorderSide(color: colorScheme.error, width: 1.5),
       ),
     );
   }
@@ -139,7 +176,6 @@ class _AuthScreenState extends State<AuthScreen> {
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FC),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -168,23 +204,29 @@ class _AuthScreenState extends State<AuthScreen> {
                               ),
                             ],
                           ),
-                          child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 34),
+                          child: Icon(Icons.auto_awesome_rounded, color: colorScheme.onPrimary, size: 34),
                         ),
                         const SizedBox(height: 18),
-                        Text('BizzFlow', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
+                        Text(
+                          'BizzFlow',
+                          style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
+                        ),
                         const SizedBox(height: 6),
                         Text(
-                          _isLogin ? 'Gestioná tu negocio de forma simple' : 'Creá tu cuenta y empezá a organizar tu negocio',
+                          _isLogin
+                              ? 'Gestioná tu negocio de forma simple'
+                              : 'Creá tu cuenta y empezá a organizar tu negocio',
                           textAlign: TextAlign.center,
-                          style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
                         ),
                         const SizedBox(height: 28),
                         Card(
                           elevation: 0,
-                          color: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(24),
-                            side: BorderSide(color: Colors.grey.shade200),
+                            side: BorderSide(color: colorScheme.outlineVariant),
                           ),
                           child: Padding(
                             padding: const EdgeInsets.all(24),
@@ -193,14 +235,20 @@ class _AuthScreenState extends State<AuthScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  Text(_isLogin ? 'Iniciar sesión' : 'Crear cuenta', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+                                  Text(
+                                    _isLogin ? 'Iniciar sesión' : 'Crear cuenta',
+                                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                                  ),
                                   const SizedBox(height: 20),
                                   TextFormField(
                                     controller: _emailController,
                                     keyboardType: TextInputType.emailAddress,
                                     textInputAction: TextInputAction.next,
                                     autofillHints: const [AutofillHints.email],
-                                    decoration: _inputDecoration(label: 'Correo electrónico', icon: Icons.email_outlined),
+                                    decoration: _inputDecoration(
+                                      label: 'Correo electrónico',
+                                      icon: Icons.email_outlined,
+                                    ),
                                     validator: (value) {
                                       final email = value?.trim() ?? '';
                                       if (email.isEmpty) return 'Ingresá tu correo electrónico.';
@@ -214,27 +262,51 @@ class _AuthScreenState extends State<AuthScreen> {
                                     obscureText: _obscurePassword,
                                     textInputAction: TextInputAction.done,
                                     autofillHints: const [AutofillHints.password],
-                                    onFieldSubmitted: (_) { if (!_isLoading) _submit(); },
+                                    onFieldSubmitted: (_) {
+                                      if (!_isLoading) _submit();
+                                    },
                                     decoration: _inputDecoration(
                                       label: 'Contraseña',
                                       icon: Icons.lock_outline_rounded,
                                       suffixIcon: IconButton(
                                         tooltip: _obscurePassword ? 'Mostrar contraseña' : 'Ocultar contraseña',
                                         onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                                        icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                                        icon: Icon(
+                                          _obscurePassword
+                                              ? Icons.visibility_outlined
+                                              : Icons.visibility_off_outlined,
+                                        ),
                                       ),
                                     ),
                                     validator: (value) {
                                       if ((value ?? '').isEmpty) return 'Ingresá tu contraseña.';
-                                      if (!_isLogin && value!.length < 6) return 'La contraseña debe tener al menos 6 caracteres.';
+                                      if (!_isLogin && value!.length < 6) {
+                                        return 'La contraseña debe tener al menos 6 caracteres.';
+                                      }
                                       return null;
                                     },
                                   ),
                                   if (_isLogin) ...[
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 4),
+                                    CheckboxListTile.adaptive(
+                                      contentPadding: EdgeInsets.zero,
+                                      value: _rememberLogin,
+                                      onChanged: _isLoading
+                                          ? null
+                                          : (value) => _setRememberLogin(value ?? true),
+                                      title: const Text(
+                                        'Recordar mi sesión',
+                                        style: TextStyle(fontWeight: FontWeight.w600),
+                                      ),
+                                      subtitle: const Text('No guarda tu contraseña.'),
+                                      controlAffinity: ListTileControlAffinity.leading,
+                                    ),
                                     Align(
                                       alignment: Alignment.centerRight,
-                                      child: TextButton(onPressed: _isLoading ? null : _resetPassword, child: const Text('¿Olvidaste tu contraseña?')),
+                                      child: TextButton(
+                                        onPressed: _isLoading ? null : _resetPassword,
+                                        child: const Text('¿Olvidaste tu contraseña?'),
+                                      ),
                                     ),
                                   ],
                                   const SizedBox(height: 8),
@@ -242,27 +314,47 @@ class _AuthScreenState extends State<AuthScreen> {
                                     height: 52,
                                     child: FilledButton(
                                       onPressed: _isLoading ? null : _submit,
-                                      style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                                      style: FilledButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(16),
+                                        ),
+                                      ),
                                       child: _isLoading
-                                          ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-                                          : Text(_isLogin ? 'Iniciar sesión' : 'Crear cuenta', style: const TextStyle(fontWeight: FontWeight.w700)),
+                                          ? SizedBox(
+                                              width: 22,
+                                              height: 22,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2.5,
+                                                color: colorScheme.onPrimary,
+                                              ),
+                                            )
+                                          : Text(
+                                              _isLogin ? 'Iniciar sesión' : 'Crear cuenta',
+                                              style: const TextStyle(fontWeight: FontWeight.w700),
+                                            ),
                                     ),
                                   ),
                                   const SizedBox(height: 18),
                                   Row(
                                     children: [
-                                      Expanded(child: Divider(color: Colors.grey.shade200)),
+                                      Expanded(child: Divider(color: colorScheme.outlineVariant)),
                                       Padding(
                                         padding: const EdgeInsets.symmetric(horizontal: 12),
-                                        child: Text('o', style: TextStyle(color: Colors.grey.shade500)),
+                                        child: Text(
+                                          'o',
+                                          style: TextStyle(color: colorScheme.onSurfaceVariant),
+                                        ),
                                       ),
-                                      Expanded(child: Divider(color: Colors.grey.shade200)),
+                                      Expanded(child: Divider(color: colorScheme.outlineVariant)),
                                     ],
                                   ),
                                   const SizedBox(height: 12),
                                   TextButton(
                                     onPressed: _isLoading ? null : _toggleMode,
-                                    child: Text(_isLogin ? 'Crear una cuenta nueva' : 'Ya tengo una cuenta', style: const TextStyle(fontWeight: FontWeight.w600)),
+                                    child: Text(
+                                      _isLogin ? 'Crear una cuenta nueva' : 'Ya tengo una cuenta',
+                                      style: const TextStyle(fontWeight: FontWeight.w600),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -273,13 +365,15 @@ class _AuthScreenState extends State<AuthScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.verified_user_outlined, size: 17, color: Colors.grey.shade500),
+                            Icon(Icons.verified_user_outlined, size: 17, color: colorScheme.onSurfaceVariant),
                             const SizedBox(width: 7),
                             Flexible(
                               child: Text(
                                 'Tus datos están protegidos con Firebase Authentication',
                                 textAlign: TextAlign.center,
-                                style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade500),
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
                               ),
                             ),
                           ],

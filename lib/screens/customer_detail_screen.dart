@@ -28,8 +28,10 @@ class CustomerDetailScreen extends StatelessWidget {
       final year = date.year.toString();
       final hour = date.hour.toString().padLeft(2, '0');
       final minute = date.minute.toString().padLeft(2, '0');
+
       return '$day/$month/$year · $hour:$minute';
     }
+
     return 'Fecha pendiente';
   }
 
@@ -44,6 +46,9 @@ class CustomerDetailScreen extends StatelessWidget {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) {
+        final theme = Theme.of(dialogContext);
+        final colors = theme.colorScheme;
+
         return AlertDialog(
           title: const Text('Detalle de compra'),
           content: SizedBox(
@@ -55,7 +60,9 @@ class CustomerDetailScreen extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     _formatDate(data['createdAt']),
-                    style: TextStyle(color: Colors.grey.shade600),
+                    style: TextStyle(
+                      color: colors.onSurfaceVariant,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -68,7 +75,9 @@ class CustomerDetailScreen extends StatelessWidget {
                       final item = Map<String, dynamic>.from(
                         items[index] as Map,
                       );
-                      final name = item['productName']?.toString() ?? 'Producto';
+
+                      final name =
+                          item['productName']?.toString() ?? 'Producto';
                       final quantity = _number(item['quantity']);
                       final unit = item['unit']?.toString() ?? 'unidad';
                       final subtotal = _number(item['subtotal']);
@@ -77,14 +86,18 @@ class CustomerDetailScreen extends StatelessWidget {
                         contentPadding: EdgeInsets.zero,
                         title: Text(
                           name,
-                          style: const TextStyle(fontWeight: FontWeight.w700),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                         subtitle: Text(
                           '${quantity % 1 == 0 ? quantity.toInt() : quantity} $unit',
                         ),
                         trailing: Text(
                           _formatMoney(subtotal),
-                          style: const TextStyle(fontWeight: FontWeight.w800),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                       );
                     },
@@ -95,9 +108,7 @@ class CustomerDetailScreen extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .primaryContainer,
+                    color: colors.primaryContainer,
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Row(
@@ -105,7 +116,9 @@ class CustomerDetailScreen extends StatelessWidget {
                     children: [
                       const Text(
                         'Total',
-                        style: TextStyle(fontWeight: FontWeight.w800),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                       Text(
                         _formatMoney(total),
@@ -133,6 +146,9 @@ class CustomerDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
     final customerRef = FirebaseFirestore.instance
         .collection('customers')
         .doc(customerId);
@@ -143,7 +159,7 @@ class CustomerDetailScreen extends StatelessWidget {
         .snapshots();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7FB),
+      backgroundColor: colors.surface,
       appBar: AppBar(
         title: const Text(
           'Detalle del cliente',
@@ -154,7 +170,9 @@ class CustomerDetailScreen extends StatelessWidget {
         stream: customerRef.snapshots(),
         builder: (context, customerSnapshot) {
           if (customerSnapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
           }
 
           if (customerSnapshot.hasError || !customerSnapshot.hasData) {
@@ -164,6 +182,7 @@ class CustomerDetailScreen extends StatelessWidget {
           }
 
           final customerData = customerSnapshot.data!.data();
+
           if (customerData == null ||
               customerData['businessId']?.toString() != businessId) {
             return const Center(
@@ -179,7 +198,9 @@ class CustomerDetailScreen extends StatelessWidget {
             stream: salesStream,
             builder: (context, salesSnapshot) {
               if (salesSnapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
               }
 
               if (salesSnapshot.hasError) {
@@ -187,35 +208,39 @@ class CustomerDetailScreen extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.all(24),
                     child: Text(
-                      'No se pudo cargar el historial de compras.\n\n${salesSnapshot.error}',
+                      'No se pudo cargar el historial de compras.\n\n'
+                      '${salesSnapshot.error}',
                       textAlign: TextAlign.center,
                     ),
                   ),
                 );
               }
 
-              final sales = (salesSnapshot.data?.docs ?? [])
-                  .where((sale) {
-                    final data = sale.data();
-                    return data['businessId']?.toString() == businessId &&
-                        data['customerId']?.toString() == customerId;
-                  })
-                  .toList();
+              final sales = (salesSnapshot.data?.docs ?? []).where((sale) {
+                final data = sale.data();
+
+                return data['businessId']?.toString() == businessId &&
+                    data['customerId']?.toString() == customerId;
+              }).toList();
 
               sales.sort((a, b) {
                 final dateA = a.data()['createdAt'];
                 final dateB = b.data()['createdAt'];
+
                 if (dateA is Timestamp && dateB is Timestamp) {
                   return dateB.compareTo(dateA);
                 }
+
                 if (dateA is Timestamp) return -1;
                 if (dateB is Timestamp) return 1;
+
                 return 0;
               });
 
               final totalSpent = sales.fold<double>(
                 0,
-                (total, sale) => total + _number(sale.data()['total']),
+                (total, sale) =>
+                    total + _number(sale.data()['total']),
               );
 
               return ListView(
@@ -224,19 +249,18 @@ class CustomerDetailScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(22),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primaryContainer,
+                      color: colors.primaryContainer,
                       borderRadius: BorderRadius.circular(24),
                     ),
                     child: Row(
                       children: [
                         CircleAvatar(
                           radius: 32,
-                          backgroundColor:
-                              Theme.of(context).colorScheme.primary,
+                          backgroundColor: colors.primary,
                           child: Text(
                             name.isNotEmpty ? name[0].toUpperCase() : '?',
                             style: TextStyle(
-                              color: Theme.of(context).colorScheme.onPrimary,
+                              color: colors.onPrimary,
                               fontSize: 24,
                               fontWeight: FontWeight.w900,
                             ),
@@ -245,14 +269,15 @@ class CustomerDetailScreen extends StatelessWidget {
                         const SizedBox(width: 16),
                         Expanded(
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment:
+                                CrossAxisAlignment.start,
                             children: [
                               Text(
                                 name,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineSmall
-                                    ?.copyWith(fontWeight: FontWeight.w900),
+                                style: theme.textTheme.headlineSmall
+                                    ?.copyWith(
+                                  fontWeight: FontWeight.w900,
+                                ),
                               ),
                               if (phone.isNotEmpty) ...[
                                 const SizedBox(height: 5),
@@ -291,26 +316,32 @@ class CustomerDetailScreen extends StatelessWidget {
                   const SizedBox(height: 24),
                   Text(
                     'Historial de compras',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge
-                        ?.copyWith(fontWeight: FontWeight.w900),
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   if (sales.isEmpty)
                     Container(
                       padding: const EdgeInsets.all(28),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: colors.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Column(
+                      child: Column(
                         children: [
-                          Icon(Icons.receipt_long_outlined, size: 42),
-                          SizedBox(height: 12),
+                          Icon(
+                            Icons.receipt_long_outlined,
+                            size: 42,
+                            color: colors.onSurfaceVariant,
+                          ),
+                          const SizedBox(height: 12),
                           Text(
                             'Todavía no hay compras registradas para este cliente.',
                             textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: colors.onSurface,
+                            ),
                           ),
                         ],
                       ),
@@ -323,36 +354,37 @@ class CustomerDetailScreen extends StatelessWidget {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(18),
                           side: BorderSide(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .outlineVariant,
+                            color: colors.outlineVariant,
                           ),
                         ),
                         child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
+                          contentPadding:
+                              const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 6,
                           ),
                           leading: CircleAvatar(
-                            backgroundColor: Theme.of(context)
-                                .colorScheme
-                                .primaryContainer,
+                            backgroundColor: colors.primaryContainer,
                             child: Icon(
                               Icons.receipt_long_outlined,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onPrimaryContainer,
+                              color: colors.onPrimaryContainer,
                             ),
                           ),
                           title: Text(
-                            _formatMoney(_number(sale.data()['total'])),
-                            style: const TextStyle(fontWeight: FontWeight.w900),
+                            _formatMoney(
+                              _number(sale.data()['total']),
+                            ),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                            ),
                           ),
                           subtitle: Text(
                             '${_formatDate(sale.data()['createdAt'])} · '
                             '${(sale.data()['items'] as List?)?.length ?? 0} productos',
                           ),
-                          trailing: const Icon(Icons.chevron_right_rounded),
+                          trailing: const Icon(
+                            Icons.chevron_right_rounded,
+                          ),
                           onTap: () => _showSaleDetail(context, sale),
                         ),
                       ),
@@ -380,24 +412,31 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: colors.outlineVariant,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: colors.primary),
+          Icon(
+            icon,
+            color: colors.primary,
+          ),
           const SizedBox(height: 10),
           Text(
             title,
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey.shade600,
+              color: colors.onSurfaceVariant,
               fontWeight: FontWeight.w600,
             ),
           ),

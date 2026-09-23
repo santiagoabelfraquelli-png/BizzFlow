@@ -16,8 +16,26 @@ class StockScreen extends StatefulWidget {
 class _StockScreenState extends State<StockScreen> {
   final Map<String, bool> _updatingProducts = {};
 
+  static const Color _pink = Color(0xFFE8A6B8);
+  static const Color _green = Color(0xFF4CAF7D);
+  static const Color _orange = Color(0xFFE39A3B);
+  static const Color _red = Color(0xFFE45858);
+
   CollectionReference<Map<String, dynamic>> get _productsRef =>
       FirebaseFirestore.instance.collection('products');
+
+  CollectionReference<Map<String, dynamic>> get _stockMovementsRef =>
+      FirebaseFirestore.instance.collection('stock_movements');
+
+  Color _surface(ThemeData theme) => theme.colorScheme.surface;
+
+  Color _card(ThemeData theme) =>
+      theme.colorScheme.surfaceContainerHighest.withValues(
+        alpha: theme.brightness == Brightness.dark ? 0.35 : 0.55,
+      );
+
+  Color _muted(ThemeData theme) =>
+      theme.colorScheme.onSurface.withValues(alpha: 0.62);
 
   Future<void> _addStock({
     required String productId,
@@ -30,6 +48,8 @@ class _StockScreenState extends State<StockScreen> {
     final quantity = await showDialog<double>(
       context: context,
       builder: (dialogContext) {
+        final theme = Theme.of(dialogContext);
+
         return AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
@@ -46,7 +66,7 @@ class _StockScreenState extends State<StockScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF7F8FC),
+                  color: _pink.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
@@ -55,12 +75,12 @@ class _StockScreenState extends State<StockScreen> {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE8A6B8).withValues(alpha: 0.15),
+                        color: _pink.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
                         Icons.inventory_2_outlined,
-                        color: Color(0xFFE8A6B8),
+                        color: _pink,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -79,7 +99,7 @@ class _StockScreenState extends State<StockScreen> {
                           Text(
                             'Stock actual: ${_formatNumber(currentStock)} $unit',
                             style: TextStyle(
-                              color: Colors.grey.shade600,
+                              color: _muted(theme),
                               fontSize: 13,
                             ),
                           ),
@@ -93,26 +113,29 @@ class _StockScreenState extends State<StockScreen> {
               TextField(
                 controller: controller,
                 autofocus: true,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
                 decoration: InputDecoration(
                   labelText: 'Cantidad a agregar',
                   hintText: 'Ej: 10',
                   suffixText: unit,
-                  filled: true,
-                  fillColor: const Color(0xFFF8F8FA),
                   prefixIcon: const Icon(Icons.add_circle_outline),
+                  filled: true,
+                  fillColor: _card(theme),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
                     borderSide: BorderSide.none,
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.grey.shade200),
+                    borderSide: BorderSide(
+                      color: theme.colorScheme.outline.withValues(alpha: 0.25),
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
                     borderSide: const BorderSide(
-                      color: Color(0xFFE8A6B8),
+                      color: _pink,
                       width: 1.5,
                     ),
                   ),
@@ -124,19 +147,14 @@ class _StockScreenState extends State<StockScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(
-                'Cancelar',
-                style: TextStyle(
-                  color: Colors.grey.shade700,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              child: const Text('Cancelar'),
             ),
             FilledButton(
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFE8A6B8),
+                backgroundColor: _pink,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -166,9 +184,7 @@ class _StockScreenState extends State<StockScreen> {
 
     controller.dispose();
 
-    if (quantity == null) {
-      return;
-    }
+    if (quantity == null || !mounted) return;
 
     setState(() {
       _updatingProducts[productId] = true;
@@ -176,6 +192,7 @@ class _StockScreenState extends State<StockScreen> {
 
     try {
       final productRef = _productsRef.doc(productId);
+      final movementRef = _stockMovementsRef.doc();
 
       await FirebaseFirestore.instance.runTransaction(
         (transaction) async {
@@ -188,60 +205,59 @@ class _StockScreenState extends State<StockScreen> {
           final data = snapshot.data();
 
           if (data == null) {
-            throw Exception('No se pudieron obtener los datos del producto.');
+            throw Exception(
+              'No se pudieron obtener los datos del producto.',
+            );
           }
 
           if (data['businessId']?.toString() != widget.businessId) {
-            throw Exception('El producto no pertenece a este negocio.');
+            throw Exception(
+              'El producto no pertenece a este negocio.',
+            );
           }
 
           final stockValue = data['stock'];
 
           if (stockValue is! num) {
-            throw Exception('El stock actual del producto no es válido.');
+            throw Exception(
+              'El stock actual del producto no es válido.',
+            );
           }
 
           final newStock = stockValue.toDouble() + quantity;
 
-          transaction.update(productRef, {'stock': newStock});
+          transaction.update(productRef, {
+            'stock': newStock,
+          });
+
+          transaction.set(movementRef, {
+            'businessId': widget.businessId,
+            'productId': productId,
+            'type': 'entry',
+            'quantity': quantity,
+            'stockAfter': newStock,
+            'createdAt': FieldValue.serverTimestamp(),
+            'note': 'Entrada manual de stock',
+          });
         },
       );
 
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          content: Text(
-            'Se agregaron ${_formatNumber(quantity)} $unit de "$productName".',
-          ),
-        ),
+      _showMessage(
+        'Se agregaron ${_formatNumber(quantity)} $unit de "$productName".',
       );
     } on FirebaseException catch (e) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          content: Text(
-            'No se pudo actualizar el stock: ${e.message ?? e.code}',
-          ),
-        ),
+      _showMessage(
+        'No se pudo actualizar el stock: ${e.message ?? e.code}',
       );
     } catch (e) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          content: Text(e.toString().replaceFirst('Exception: ', '')),
-        ),
+      _showMessage(
+        e.toString().replaceFirst('Exception: ', ''),
       );
     } finally {
       if (mounted) {
@@ -250,6 +266,17 @@ class _StockScreenState extends State<StockScreen> {
         });
       }
     }
+  }
+
+  void _showMessage(String message) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        content: Text(message),
+      ),
+    );
   }
 
   String _formatNumber(double value) {
@@ -261,54 +288,30 @@ class _StockScreenState extends State<StockScreen> {
   }
 
   Color _stockColor(double stock) {
-    if (stock <= 0) {
-      return const Color(0xFFE45858);
-    }
-
-    if (stock <= 5) {
-      return const Color(0xFFE39A3B);
-    }
-
-    return const Color(0xFF4CAF7D);
+    if (stock <= 0) return _red;
+    if (stock <= 5) return _orange;
+    return _green;
   }
 
   Color _stockBackgroundColor(double stock) {
-    if (stock <= 0) {
-      return const Color(0xFFFFEEEE);
-    }
-
-    if (stock <= 5) {
-      return const Color(0xFFFFF6E8);
-    }
-
-    return const Color(0xFFECF9F2);
+    if (stock <= 0) return _red.withValues(alpha: 0.10);
+    if (stock <= 5) return _orange.withValues(alpha: 0.10);
+    return _green.withValues(alpha: 0.10);
   }
 
   String _stockLabel(double stock, String unit) {
-    if (stock <= 0) {
-      return 'Sin stock';
-    }
-
-    if (stock <= 5) {
-      return 'Stock bajo';
-    }
-
+    if (stock <= 0) return 'Sin stock';
+    if (stock <= 5) return 'Stock bajo';
     return '${_formatNumber(stock)} $unit';
   }
 
   IconData _stockIcon(double stock) {
-    if (stock <= 0) {
-      return Icons.remove_shopping_cart_outlined;
-    }
-
-    if (stock <= 5) {
-      return Icons.warning_amber_rounded;
-    }
-
+    if (stock <= 0) return Icons.remove_shopping_cart_outlined;
+    if (stock <= 5) return Icons.warning_amber_rounded;
     return Icons.inventory_2_outlined;
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
       child: Row(
@@ -319,16 +322,16 @@ class _StockScreenState extends State<StockScreen> {
               children: [
                 Text(
                   'Stock',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.6,
-                      ),
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.6,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   'Controlá y actualizá el inventario de tu negocio.',
                   style: TextStyle(
-                    color: Colors.grey.shade600,
+                    color: _muted(theme),
                     fontSize: 14,
                   ),
                 ),
@@ -339,12 +342,12 @@ class _StockScreenState extends State<StockScreen> {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: const Color(0xFFE8A6B8).withValues(alpha: 0.12),
+              color: _pink.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(15),
             ),
             child: const Icon(
               Icons.inventory_2_outlined,
-              color: Color(0xFFE8A6B8),
+              color: _pink,
             ),
           ),
         ],
@@ -353,17 +356,17 @@ class _StockScreenState extends State<StockScreen> {
   }
 
   Widget _buildSummary(
+    ThemeData theme,
     List<QueryDocumentSnapshot<Map<String, dynamic>>> products,
   ) {
     final totalProducts = products.length;
-
     int withoutStock = 0;
     int lowStock = 0;
     int available = 0;
 
     for (final product in products) {
-      final stockValue = product.data()['stock'];
-      final stock = stockValue is num ? stockValue.toDouble() : 0.0;
+      final value = product.data()['stock'];
+      final stock = value is num ? value.toDouble() : 0.0;
 
       if (stock <= 0) {
         withoutStock++;
@@ -374,45 +377,46 @@ class _StockScreenState extends State<StockScreen> {
       }
     }
 
+    final cards = [
+      _SummaryCard(
+        title: 'Productos',
+        value: totalProducts.toString(),
+        icon: Icons.inventory_2_outlined,
+        iconColor: const Color(0xFF6C63A8),
+      ),
+      _SummaryCard(
+        title: 'Disponibles',
+        value: available.toString(),
+        icon: Icons.check_circle_outline,
+        iconColor: _green,
+      ),
+      _SummaryCard(
+        title: 'Stock bajo',
+        value: lowStock.toString(),
+        icon: Icons.warning_amber_rounded,
+        iconColor: _orange,
+      ),
+      _SummaryCard(
+        title: 'Sin stock',
+        value: withoutStock.toString(),
+        icon: Icons.remove_shopping_cart_outlined,
+        iconColor: _red,
+      ),
+    ];
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = constraints.maxWidth >= 850;
 
-          final cards = [
-            _SummaryCard(
-              title: 'Productos',
-              value: totalProducts.toString(),
-              icon: Icons.inventory_2_outlined,
-              iconColor: const Color(0xFF6C63A8),
-            ),
-            _SummaryCard(
-              title: 'Disponibles',
-              value: available.toString(),
-              icon: Icons.check_circle_outline,
-              iconColor: const Color(0xFF4CAF7D),
-            ),
-            _SummaryCard(
-              title: 'Stock bajo',
-              value: lowStock.toString(),
-              icon: Icons.warning_amber_rounded,
-              iconColor: const Color(0xFFE39A3B),
-            ),
-            _SummaryCard(
-              title: 'Sin stock',
-              value: withoutStock.toString(),
-              icon: Icons.remove_shopping_cart_outlined,
-              iconColor: const Color(0xFFE45858),
-            ),
-          ];
-
           if (isWide) {
             return Row(
               children: [
                 for (int i = 0; i < cards.length; i++) ...[
                   Expanded(child: cards[i]),
-                  if (i < cards.length - 1) const SizedBox(width: 12),
+                  if (i < cards.length - 1)
+                    const SizedBox(width: 12),
                 ],
               ],
             );
@@ -436,28 +440,43 @@ class _StockScreenState extends State<StockScreen> {
   }
 
   Widget _buildProductCard(
-    BuildContext context,
+    ThemeData theme,
     QueryDocumentSnapshot<Map<String, dynamic>> document,
   ) {
     final data = document.data();
 
-    final productName = data['name'] as String? ?? 'Sin nombre';
-    final category = data['categoryName'] as String? ?? 'Sin categoría';
-    final unit = data['unit'] as String? ?? 'unidad';
+    final productName =
+        data['name']?.toString().trim().isNotEmpty == true
+            ? data['name'].toString()
+            : 'Sin nombre';
+
+    final category =
+        data['categoryName']?.toString().trim().isNotEmpty == true
+            ? data['categoryName'].toString()
+            : 'Sin categoría';
+
+    final unit =
+        data['unit']?.toString().trim().isNotEmpty == true
+            ? data['unit'].toString()
+            : 'unidad';
+
     final stockValue = data['stock'];
     final stock = stockValue is num ? stockValue.toDouble() : 0.0;
+
     final isUpdating = _updatingProducts[document.id] == true;
     final stockColor = _stockColor(stock);
     final stockBackground = _stockBackgroundColor(stock);
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _surface(theme),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(
+          color: theme.colorScheme.outline.withValues(alpha: 0.15),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.035),
+            color: theme.colorScheme.shadow.withValues(alpha: 0.06),
             blurRadius: 14,
             offset: const Offset(0, 5),
           ),
@@ -504,7 +523,7 @@ class _StockScreenState extends State<StockScreen> {
                           Icon(
                             Icons.category_outlined,
                             size: 14,
-                            color: Colors.grey.shade500,
+                            color: _muted(theme),
                           ),
                           const SizedBox(width: 5),
                           Expanded(
@@ -513,7 +532,7 @@ class _StockScreenState extends State<StockScreen> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                color: Colors.grey.shade600,
+                                color: _muted(theme),
                                 fontSize: 13,
                               ),
                             ),
@@ -524,18 +543,25 @@ class _StockScreenState extends State<StockScreen> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-                  decoration: BoxDecoration(
-                    color: stockBackground,
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: Text(
-                    _stockLabel(stock, unit),
-                    style: TextStyle(
-                      color: stockColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 11,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
+                      color: stockBackground,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: Text(
+                      _stockLabel(stock, unit),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: stockColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                 ),
@@ -545,7 +571,7 @@ class _StockScreenState extends State<StockScreen> {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8F8FA),
+                color: _card(theme),
                 borderRadius: BorderRadius.circular(15),
               ),
               child: Row(
@@ -557,7 +583,7 @@ class _StockScreenState extends State<StockScreen> {
                         Text(
                           'Cantidad actual',
                           style: TextStyle(
-                            color: Colors.grey.shade600,
+                            color: _muted(theme),
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
@@ -581,7 +607,7 @@ class _StockScreenState extends State<StockScreen> {
                               child: Text(
                                 unit,
                                 style: TextStyle(
-                                  color: Colors.grey.shade600,
+                                  color: _muted(theme),
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -596,7 +622,7 @@ class _StockScreenState extends State<StockScreen> {
                     width: 42,
                     height: 42,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: _surface(theme),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -623,10 +649,9 @@ class _StockScreenState extends State<StockScreen> {
                           unit: unit,
                         ),
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFFE8A6B8),
+                  backgroundColor: _pink,
                   foregroundColor: Colors.white,
-                  disabledBackgroundColor:
-                      const Color(0xFFE8A6B8).withValues(alpha: 0.45),
+                  disabledBackgroundColor: _pink.withValues(alpha: 0.45),
                   disabledForegroundColor: Colors.white,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(vertical: 13),
@@ -640,10 +665,14 @@ class _StockScreenState extends State<StockScreen> {
                         height: 18,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
-                    : const Icon(Icons.add_circle_outline, size: 19),
+                    : const Icon(
+                        Icons.add_circle_outline,
+                        size: 19,
+                      ),
                 label: Text(
                   isUpdating ? 'Actualizando...' : 'Agregar stock',
                   style: const TextStyle(fontWeight: FontWeight.w700),
@@ -656,7 +685,7 @@ class _StockScreenState extends State<StockScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(ThemeData theme) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -664,9 +693,11 @@ class _StockScreenState extends State<StockScreen> {
           constraints: const BoxConstraints(maxWidth: 460),
           padding: const EdgeInsets.all(32),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: _surface(theme),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.grey.shade200),
+            border: Border.all(
+              color: theme.colorScheme.outline.withValues(alpha: 0.15),
+            ),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -675,13 +706,13 @@ class _StockScreenState extends State<StockScreen> {
                 width: 76,
                 height: 76,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8A6B8).withValues(alpha: 0.12),
+                  color: _pink.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.inventory_2_outlined,
                   size: 34,
-                  color: Color(0xFFE8A6B8),
+                  color: _pink,
                 ),
               ),
               const SizedBox(height: 20),
@@ -698,7 +729,7 @@ class _StockScreenState extends State<StockScreen> {
                 'Creá productos para comenzar a administrar el stock de tu negocio.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.grey.shade600,
+                  color: _muted(theme),
                   height: 1.4,
                 ),
               ),
@@ -710,6 +741,7 @@ class _StockScreenState extends State<StockScreen> {
   }
 
   Widget _buildProductGrid(
+    ThemeData theme,
     List<QueryDocumentSnapshot<Map<String, dynamic>>> products,
   ) {
     return LayoutBuilder(
@@ -723,6 +755,7 @@ class _StockScreenState extends State<StockScreen> {
         }
 
         const spacing = 14.0;
+
         final itemWidth =
             (constraints.maxWidth - ((columns - 1) * spacing)) / columns;
 
@@ -735,7 +768,7 @@ class _StockScreenState extends State<StockScreen> {
                 .map(
                   (product) => SizedBox(
                     width: itemWidth,
-                    child: _buildProductCard(context, product),
+                    child: _buildProductCard(theme, product),
                   ),
                 )
                 .toList(),
@@ -747,22 +780,41 @@ class _StockScreenState extends State<StockScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F8FA),
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Stock'),
+        automaticallyImplyLeading: true,
+        leading: IconButton(
+          tooltip: 'Volver',
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            }
+          },
+        ),
+        title: const Text(
+          'Stock',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
         elevation: 0,
-        backgroundColor: const Color(0xFFF8F8FA),
+        backgroundColor: theme.colorScheme.surface,
+        foregroundColor: theme.colorScheme.onSurface,
         surfaceTintColor: Colors.transparent,
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: _productsRef
-            .where('businessId', isEqualTo: widget.businessId)
+            .where(
+              'businessId',
+              isEqualTo: widget.businessId,
+            )
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
-              child: CircularProgressIndicator(color: Color(0xFFE8A6B8)),
+              child: CircularProgressIndicator(color: _pink),
             );
           }
 
@@ -774,17 +826,19 @@ class _StockScreenState extends State<StockScreen> {
                   constraints: const BoxConstraints(maxWidth: 500),
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: _surface(theme),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.red.shade100),
+                    border: Border.all(
+                      color: _red.withValues(alpha: 0.25),
+                    ),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.error_outline,
                         size: 42,
-                        color: Colors.red.shade400,
+                        color: _red,
                       ),
                       const SizedBox(height: 14),
                       const Text(
@@ -798,7 +852,9 @@ class _StockScreenState extends State<StockScreen> {
                       Text(
                         '${snapshot.error}',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey.shade600),
+                        style: TextStyle(
+                          color: _muted(theme),
+                        ),
                       ),
                     ],
                   ),
@@ -810,32 +866,32 @@ class _StockScreenState extends State<StockScreen> {
           final products = snapshot.data?.docs.toList() ?? [];
 
           products.sort((a, b) {
-            final nameA = a.data()['name'] as String? ?? '';
-            final nameB = b.data()['name'] as String? ?? '';
-            return nameA.toLowerCase().compareTo(nameB.toLowerCase());
+            final nameA = a.data()['name']?.toString() ?? '';
+            final nameB = b.data()['name']?.toString() ?? '';
+
+            return nameA.toLowerCase().compareTo(
+                  nameB.toLowerCase(),
+                );
           });
 
           if (products.isEmpty) {
             return Column(
               children: [
-                _buildHeader(),
-                Expanded(child: _buildEmptyState()),
+                _buildHeader(theme),
+                Expanded(
+                  child: _buildEmptyState(theme),
+                ),
               ],
             );
           }
 
-          // No usamos un Scrollbar manual aquí.
-          // En Flutter Web, un Scrollbar sin un ScrollController/ScrollPosition
-          // asociado puede provocar la excepción mouse_tracker/scrollbar al
-          // usar la rueda del mouse. SingleChildScrollView gestiona su propio
-          // ScrollPosition y evita ese conflicto.
           return SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeader(),
-                _buildSummary(products),
-                _buildProductGrid(products),
+                _buildHeader(theme),
+                _buildSummary(theme, products),
+                _buildProductGrid(theme, products),
               ],
             ),
           );
@@ -860,15 +916,19 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(
+          color: theme.colorScheme.outline.withValues(alpha: 0.15),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.025),
+            color: theme.colorScheme.shadow.withValues(alpha: 0.05),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -883,7 +943,11 @@ class _SummaryCard extends StatelessWidget {
               color: iconColor.withValues(alpha: 0.11),
               borderRadius: BorderRadius.circular(13),
             ),
-            child: Icon(icon, color: iconColor, size: 21),
+            child: Icon(
+              icon,
+              color: iconColor,
+              size: 21,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -893,7 +957,9 @@ class _SummaryCard extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
-                    color: Colors.grey.shade600,
+                    color: theme.colorScheme.onSurface.withValues(
+                      alpha: 0.62,
+                    ),
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),

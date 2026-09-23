@@ -1,11 +1,10 @@
-```markdown
 # BizzFlow — PROJECT_CONTEXT.md
 
 > **Fuente de verdad del proyecto.**
 >
 > Antes de realizar cambios, leer este archivo completo y asumir que describe el estado actual del repositorio.
 
-**Última actualización:** 2026-09-22
+**Última actualización:** 2026-09-23
 
 ---
 
@@ -17,12 +16,12 @@ El objetivo actual es crear un MVP funcional que pueda probarse rápidamente con
 
 El proyecto está desarrollado con:
 
-* Flutter
-* Dart
-* Firebase Authentication
-* Cloud Firestore
-* Git / GitHub
-* Cursor como editor
+- Flutter
+- Dart
+- Firebase Authentication
+- Cloud Firestore
+- Git / GitHub
+- Cursor como editor
 
 El usuario es principiante/intermedio en programación y prefiere soluciones completas y concretas.
 
@@ -74,10 +73,18 @@ El flujo actual del MVP es:
 8. Productos
 9. Clientes
 10. Gastos
+11. Perfil y configuración
 
-Todos estos módulos están actualmente implementados, integrados y probados.
+Todos estos módulos están actualmente implementados.
 
-El MVP se encuentra actualmente en una etapa de **mejora visual y UX**, manteniendo la lógica de negocio existente.
+La etapa actual se centra en:
+
+- Consistencia visual
+- Experiencia de usuario
+- Tema claro/oscuro
+- Robustez funcional
+- Seguridad de Firestore
+- Validación del MVP
 
 ---
 
@@ -85,10 +92,10 @@ El MVP se encuentra actualmente en una etapa de **mejora visual y UX**, mantenie
 
 Firebase Authentication está configurado para:
 
-* Registro
-* Inicio de sesión
-* Verificación de email
-* Recuperación de contraseña
+- Registro
+- Inicio de sesión
+- Verificación de email
+- Recuperación de contraseña
 
 La sesión de Firebase se mantiene entre aperturas de la aplicación.
 
@@ -100,14 +107,15 @@ No guardar contraseñas en texto plano en Firestore.
 
 Colecciones utilizadas actualmente:
 
-* `users`
-* `businesses`
-* `categories`
-* `products`
-* `sales`
-* `customers`
-* `expenses`
-* `cash_movements`
+- `users`
+- `businesses`
+- `categories`
+- `products`
+- `sales`
+- `customers`
+- `expenses`
+- `cash_movements`
+- `stock_movements`
 
 Todas las colecciones de datos del negocio utilizan `businessId`.
 
@@ -123,24 +131,24 @@ Archivo:
 
 Funcionalidades:
 
-* Listar categorías
-* Crear categorías
-* Eliminar categorías
-* Orden alfabético
-* Filtrado por `businessId`
+- Listar categorías
+- Crear categorías
+- Eliminar categorías
+- Orden alfabético
+- Filtrado por `businessId`
 
 Campos:
 
-* `businessId`
-* `name`
-* `active`
-* `createdAt`
+- `businessId`
+- `name`
+- `active`
+- `createdAt`
 
 Estado:
 
 **Funcional y probado.**
 
-La pantalla todavía puede recibir mejoras visuales posteriormente.
+La pantalla puede recibir mejoras visuales adicionales posteriormente.
 
 ---
 
@@ -152,49 +160,53 @@ Archivo:
 
 Funcionalidades:
 
-* Crear productos
-* Listar productos
-* Eliminar productos
-* Seleccionar categoría
-* Precio
-* Stock inicial
-* Unidad
-* Filtrado por `businessId`
+- Crear productos
+- Listar productos
+- Eliminar productos
+- Seleccionar categoría
+- Precio
+- Stock inicial
+- Unidad
+- Filtrado por `businessId`
 
 Unidades disponibles:
 
-* unidad
-* kg
-* g
-* litro
-* ml
+- unidad
+- kg
+- g
+- litro
+- ml
 
 Campos:
 
-* `businessId`
-* `name`
-* `categoryId`
-* `categoryName`
-* `price`
-* `stock`
-* `unit`
-* `active`
-* `createdAt`
+- `businessId`
+- `name`
+- `categoryId`
+- `categoryName`
+- `price`
+- `stock`
+- `unit`
+- `active`
+- `createdAt`
 
 ### Rediseño visual
 
 La pantalla de Productos fue rediseñada visualmente manteniendo la lógica existente.
 
-El rediseño busca:
+El rediseño incluye:
 
-* Mejor jerarquía visual
-* Tarjetas más modernas
-* Mejor organización de la información
-* Espaciado consistente
-* Iconografía renovada
-* Mejor experiencia en Chrome
-* Diseño responsive
-* Conservación de las operaciones existentes
+- Mejor jerarquía visual
+- Tarjetas modernas
+- Mejor organización de la información
+- Espaciado consistente
+- Iconografía renovada
+- Diseño responsive
+- Mejor experiencia en Chrome
+- Conservación de las operaciones existentes
+
+Los botones de acción utilizan el color principal del tema.
+
+En modo oscuro, el color principal se mantiene dentro de la misma gama visual y se oscurece para adaptarse al fondo.
 
 No se modificó la estructura de datos ni la lógica de Firebase asociada a los productos.
 
@@ -212,32 +224,32 @@ Archivo:
 
 Funcionalidades:
 
-* Listar productos
-* Agregar productos al carrito
-* Incrementar cantidades
-* Eliminar productos del carrito
-* Calcular total
-* Confirmar venta
-* Descontar stock
-* Crear registro de venta
+- Listar productos
+- Agregar productos al carrito
+- Incrementar cantidades
+- Eliminar productos del carrito
+- Calcular total
+- Confirmar venta
+- Descontar stock
+- Crear registro de venta
 
 La venta utiliza una transacción de Firestore para actualizar el stock y registrar la venta de forma atómica.
 
 Campos principales de una venta:
 
-* `businessId`
-* `items`
-* `total`
-* `createdAt`
+- `businessId`
+- `items`
+- `total`
+- `createdAt`
 
 Cada item contiene:
 
-* `productId`
-* `productName`
-* `quantity`
-* `unit`
-* `unitPrice`
-* `subtotal`
+- `productId`
+- `productName`
+- `quantity`
+- `unit`
+- `unitPrice`
+- `subtotal`
 
 ### Rediseño visual
 
@@ -245,16 +257,16 @@ La pantalla de Ventas fue rediseñada visualmente manteniendo la lógica funcion
 
 El rediseño incluye mejoras de:
 
-* Jerarquía visual
-* Carrito
-* Presentación de productos
-* Totales
-* Botones de acción
-* Espaciado
-* Tarjetas
-* Iconografía
-* Responsive
-* Experiencia de usuario
+- Jerarquía visual
+- Carrito
+- Presentación de productos
+- Totales
+- Botones de acción
+- Espaciado
+- Tarjetas
+- Iconografía
+- Responsive
+- Experiencia de usuario
 
 La transacción utilizada para registrar la venta y descontar stock se mantiene sin cambios funcionales.
 
@@ -264,10 +276,10 @@ Estado:
 
 Se comprobó mediante una venta real de prueba que:
 
-* El total se calcula correctamente.
-* La venta se registra.
-* El stock se descuenta correctamente.
-* Dashboard refleja la venta.
+- El total se calcula correctamente.
+- La venta se registra.
+- El stock se descuenta correctamente.
+- Dashboard refleja la venta.
 
 ---
 
@@ -279,71 +291,59 @@ Archivo:
 
 Funcionalidades:
 
-* Ver stock de productos
-* Mostrar categoría
-* Mostrar unidad
-* Estado del stock
-* Agregar stock
-* Actualización mediante transacción Firestore
+- Ver stock de productos
+- Mostrar categoría
+- Mostrar unidad
+- Estado del stock
+- Agregar stock
+- Actualización mediante transacción Firestore
 
 Estados actuales:
 
-* `<= 0`: Sin stock
-* `> 0` y `<= 5`: Stock bajo
-* `> 5`: Stock disponible
+- `<= 0`: Sin stock
+- `> 0` y `<= 5`: Stock bajo
+- `> 5`: Stock disponible
 
 ### Rediseño visual
 
 La pantalla de Stock fue rediseñada visualmente manteniendo toda la lógica existente.
 
-El nuevo diseño incluye:
+El diseño incluye:
 
-* Encabezado visual
-* Resumen general del inventario
-* Cantidad total de productos
-* Cantidad de productos disponibles
-* Cantidad de productos con stock bajo
-* Cantidad de productos sin stock
-* Tarjetas modernas para cada producto
-* Indicadores visuales de estado
-* Mejor presentación de cantidad y unidad
-* Botón de agregar stock renovado
-* Modal de agregar stock rediseñado
-* Diseño responsive
-* Adaptación a distintas cantidades de columnas en Chrome
-* Mejor jerarquía visual
-* Sombras y bordes redondeados
-* Iconografía renovada
+- Encabezado visual
+- Resumen general del inventario
+- Cantidad total de productos
+- Cantidad de productos disponibles
+- Cantidad de productos con stock bajo
+- Cantidad de productos sin stock
+- Tarjetas modernas para cada producto
+- Indicadores visuales de estado
+- Mejor presentación de cantidad y unidad
+- Botón de agregar stock renovado
+- Modal de agregar stock rediseñado
+- Diseño responsive
+- Adaptación a distintas cantidades de columnas en Chrome
+- Mejor jerarquía visual
+- Sombras y bordes redondeados
+- Iconografía renovada
 
 El rediseño no modifica:
 
-* Firebase
-* Firestore
-* `businessId`
-* Transacciones
-* Estructura de productos
-* Criterio de stock bajo
-* Funcionamiento de agregar stock
-
-### Validación
-
-Después del rediseño se ejecutó:
-
-`flutter analyze`
-
-Resultado:
-
-**Sin problemas.**
-
-También se mantiene pendiente la prueba visual/manual en Chrome después del último cambio para validar la apariencia final.
+- Firebase
+- Firestore
+- `businessId`
+- Transacciones
+- Estructura de productos
+- Criterio de stock bajo
+- Funcionamiento de agregar stock
 
 ### Regla de stock bajo
 
 Actualmente se mantiene:
 
-* `0 o menor`: sin stock
-* `1 a 5`: stock bajo
-* `más de 5`: disponible
+- `0 o menor`: sin stock
+- `1 a 5`: stock bajo
+- `más de 5`: disponible
 
 Este criterio NO debe modificarse salvo solicitud explícita.
 
@@ -361,18 +361,18 @@ Archivo:
 
 Funcionalidades:
 
-* Crear cliente
-* Listar clientes
-* Editar cliente
-* Eliminar cliente
+- Crear cliente
+- Listar clientes
+- Editar cliente
+- Eliminar cliente
 
 Datos:
 
-* Nombre obligatorio
-* Teléfono opcional
-* Email opcional
-* `businessId`
-* `createdAt`
+- Nombre obligatorio
+- Teléfono opcional
+- Email opcional
+- `businessId`
+- `createdAt`
 
 Actualmente los clientes todavía no están vinculados con las ventas.
 
@@ -384,12 +384,12 @@ Estado:
 
 Se comprobó:
 
-* Creación
-* Visualización
-* Edición
-* Eliminación
+- Creación
+- Visualización
+- Edición
+- Eliminación
 
-La pantalla todavía puede recibir mejoras visuales posteriormente.
+La pantalla puede recibir mejoras visuales adicionales posteriormente.
 
 ---
 
@@ -403,48 +403,46 @@ El módulo está implementado.
 
 Funcionalidades:
 
-* Crear gasto
-* Editar gasto
-* Eliminar gasto
-* Listar gastos
-* Mostrar total de gastos
-* Ordenar por fecha
-* Categorías de gastos
-* Fecha del gasto
-* Filtrado por `businessId`
+- Crear gasto
+- Editar gasto
+- Eliminar gasto
+- Listar gastos
+- Mostrar total de gastos
+- Ordenar por fecha
+- Categorías de gastos
+- Fecha del gasto
+- Filtrado por `businessId`
 
 Categorías:
 
-* Insumos
-* Alquiler
-* Servicios
-* Transporte
-* Sueldos
-* Mantenimiento
-* Otros
+- Insumos
+- Alquiler
+- Servicios
+- Transporte
+- Sueldos
+- Mantenimiento
+- Otros
 
 Campos:
 
-* `businessId`
-* `description`
-* `amount`
-* `category`
-* `date`
-* `createdAt`
+- `businessId`
+- `description`
+- `amount`
+- `category`
+- `date`
+- `createdAt`
 
 Estado:
 
 **Funcional y probado.**
 
-La regla de Firestore para `expenses` está implementada y publicada.
-
 Se comprobó que los gastos aparecen correctamente en:
 
-* Gastos
-* Dashboard
-* Caja
+- Gastos
+- Dashboard
+- Caja
 
-La pantalla todavía puede recibir mejoras visuales posteriormente.
+La pantalla puede recibir mejoras visuales adicionales posteriormente.
 
 ---
 
@@ -460,32 +458,32 @@ La Caja utiliza la colección:
 
 Cada movimiento manual contiene:
 
-* `businessId`
-* `type`
-* `amount`
-* `description`
-* `date`
-* `createdAt`
-* `source`
+- `businessId`
+- `type`
+- `amount`
+- `description`
+- `date`
+- `createdAt`
+- `source`
 
 Tipos posibles:
 
-* `income`
-* `expense`
+- `income`
+- `expense`
 
 Fuentes:
 
-* `manual`
-* `sale`
-* `expense`
+- `manual`
+- `sale`
+- `expense`
 
 ### Funcionamiento
 
 La Caja obtiene:
 
-* Ventas existentes como ingresos
-* Gastos existentes como egresos
-* Movimientos manuales como ingresos o egresos
+- Ventas existentes como ingresos
+- Gastos existentes como egresos
+- Movimientos manuales como ingresos o egresos
 
 El cálculo es:
 
@@ -493,10 +491,10 @@ El cálculo es:
 
 La pantalla muestra:
 
-* Saldo actual
-* Ingresos
-* Egresos
-* Lista de movimientos
+- Saldo actual
+- Ingresos
+- Egresos
+- Lista de movimientos
 
 Permite crear movimientos manuales mediante un botón flotante.
 
@@ -504,15 +502,15 @@ Permite crear movimientos manuales mediante un botón flotante.
 
 Se pueden crear:
 
-* Ingresos
-* Egresos
+- Ingresos
+- Egresos
 
 Cada movimiento permite indicar:
 
-* Tipo
-* Descripción
-* Monto
-* Fecha
+- Tipo
+- Descripción
+- Monto
+- Fecha
 
 ### Estado
 
@@ -520,27 +518,27 @@ Cada movimiento permite indicar:
 
 Se comprobó:
 
-* Apertura de Caja
-* Carga de datos
-* Creación de movimientos
-* Actualización del saldo
-* Visualización de movimientos
-* Ingresos
-* Egresos
-* Integración con ventas
-* Integración con gastos
+- Apertura de Caja
+- Carga de datos
+- Creación de movimientos
+- Actualización del saldo
+- Visualización de movimientos
+- Ingresos
+- Egresos
+- Integración con ventas
+- Integración con gastos
 
 También se comprobó mediante una prueba real que:
 
-* Una venta de `$2000` aparece como ingreso.
-* Un gasto de `$500` aparece como egreso.
-* El saldo resultante es `$1500`.
+- Una venta de `$2000` aparece como ingreso.
+- Un gasto de `$500` aparece como egreso.
+- El saldo resultante es `$1500`.
 
 La colección `cash_movements` cuenta con reglas de seguridad basadas en `businessId` y propietario del negocio.
 
 No se requieren índices compuestos para las consultas actuales de Caja, ya que el filtrado por `businessId` se realiza directamente y el orden de los movimientos se procesa en la aplicación.
 
-La pantalla todavía puede recibir mejoras visuales posteriormente.
+La pantalla puede recibir mejoras visuales adicionales posteriormente.
 
 ---
 
@@ -554,22 +552,22 @@ El Dashboard muestra un resumen básico del negocio.
 
 Datos actuales:
 
-* Ventas de hoy
-* Cantidad de ventas
-* Gastos de hoy
-* Resultado del día
-* Productos sin stock
-* Productos con stock bajo
+- Ventas de hoy
+- Cantidad de ventas
+- Gastos de hoy
+- Resultado del día
+- Productos sin stock
+- Productos con stock bajo
 
 Las ventas se consultan utilizando:
 
-* `businessId`
-* `createdAt`
+- `businessId`
+- `createdAt`
 
 Los gastos se consultan utilizando:
 
-* `businessId`
-* `date`
+- `businessId`
+- `date`
 
 ### Índices Firestore
 
@@ -577,13 +575,13 @@ Se crearon los siguientes índices compuestos:
 
 #### Sales
 
-* `businessId` Ascending
-* `createdAt` Ascending
+- `businessId` Ascending
+- `createdAt` Ascending
 
 #### Expenses
 
-* `businessId` Ascending
-* `date` Ascending
+- `businessId` Ascending
+- `date` Ascending
 
 ### Rediseño visual
 
@@ -591,27 +589,16 @@ El Dashboard fue rediseñado visualmente manteniendo la lógica y las consultas 
 
 El nuevo diseño incluye:
 
-* Encabezado visual del Dashboard
-* Tarjetas de métricas
-* Iconos
-* Colores diferenciados por tipo de información
-* Tarjetas de stock
-* Diseño responsive
-* Bordes redondeados
-* Sombras
-* Animaciones y transiciones visuales
-* Adaptación del número de columnas según el ancho disponible
-
-La estructura visual fue simplificada para evitar complejidad innecesaria y mantener el código estable.
-
-### Validación
-
-El rediseño fue validado mediante:
-
-* `flutter analyze`
-* Ejecución en Chrome
-* Comprobación visual
-* Comprobación de los valores existentes
+- Encabezado visual del Dashboard
+- Tarjetas de métricas
+- Iconos
+- Colores diferenciados por tipo de información
+- Tarjetas de stock
+- Diseño responsive
+- Bordes redondeados
+- Sombras
+- Animaciones y transiciones visuales
+- Adaptación del número de columnas según el ancho disponible
 
 Estado:
 
@@ -619,12 +606,12 @@ Estado:
 
 Se comprobó mediante una prueba integrada que:
 
-* Las ventas del día aparecen correctamente.
-* La cantidad de ventas se actualiza.
-* Los gastos del día aparecen correctamente.
-* El resultado del día se calcula correctamente.
-* El stock sin existencias se informa correctamente.
-* El stock bajo se informa según el criterio actual.
+- Las ventas del día aparecen correctamente.
+- La cantidad de ventas se actualiza.
+- Los gastos del día aparecen correctamente.
+- El resultado del día se calcula correctamente.
+- El stock sin existencias se informa correctamente.
+- El stock bajo se informa según el criterio actual.
 
 ---
 
@@ -636,23 +623,23 @@ Archivo:
 
 Este archivo contiene:
 
-* Configuración inicial del negocio
-* Creación del documento `businesses`
-* Asociación del negocio al usuario
-* `BusinessHomeScreen`
-* Panel principal
-* Accesos a los módulos
+- Configuración inicial del negocio
+- Creación del documento `businesses`
+- Asociación del negocio al usuario
+- `BusinessHomeScreen`
+- Panel principal
+- Accesos a los módulos
 
 Actualmente el panel contiene:
 
-* Dashboard
-* Ventas
-* Caja
-* Stock
-* Categorías
-* Productos
-* Clientes
-* Gastos
+- Dashboard
+- Ventas
+- Caja
+- Stock
+- Categorías
+- Productos
+- Clientes
+- Gastos
 
 Cada módulo recibe el `businessId` correspondiente.
 
@@ -662,17 +649,17 @@ El `BusinessHomeScreen` fue rediseñado visualmente manteniendo la lógica de na
 
 El nuevo diseño incluye:
 
-* Encabezado de bienvenida
-* Diseño basado en tarjetas
-* Iconos para cada módulo
-* Colores diferenciados por módulo
-* Bordes redondeados
-* Sombras
-* Animaciones de entrada
-* Efectos visuales al pasar el mouse
-* Escalado y desplazamiento suave de tarjetas
-* Diseño responsive mediante `LayoutBuilder`
-* Mejor organización visual de los accesos
+- Encabezado de bienvenida
+- Diseño basado en tarjetas
+- Iconos para cada módulo
+- Colores diferenciados por módulo
+- Bordes redondeados
+- Sombras
+- Animaciones de entrada
+- Efectos visuales al pasar el mouse
+- Escalado y desplazamiento suave de tarjetas
+- Diseño responsive mediante `LayoutBuilder`
+- Mejor organización visual de los accesos
 
 Los módulos y sus rutas de navegación se mantienen sin cambios funcionales.
 
@@ -694,18 +681,103 @@ Estado:
 
 ---
 
-# 12. Reglas de Firestore
+# 12. Perfil y configuración
+
+La aplicación cuenta con una pantalla de perfil/configuración del negocio.
+
+Entre sus funcionalidades se encuentra:
+
+- Visualización de información del usuario/negocio.
+- Acciones relacionadas con la configuración.
+- Reinicio de datos del negocio.
+
+### Reiniciar datos
+
+La opción **Reiniciar datos** permite eliminar los registros pertenecientes al `businessId` actual de las siguientes colecciones:
+
+- `sales`
+- `expenses`
+- `cash_movements`
+- `products`
+- `customers`
+- `categories`
+- `stock_movements`
+
+El proceso utiliza consultas filtradas por:
+
+`businessId`
+
+y elimina los documentos mediante operaciones por lotes.
+
+El proceso trabaja en lotes de hasta 450 documentos para evitar superar los límites de una operación batch.
+
+### Seguridad
+
+La eliminación se encuentra protegida mediante las reglas de Firestore y únicamente debe afectar documentos pertenecientes al negocio del usuario autenticado.
+
+Se corrigió un problema de permisos relacionado con:
+
+`stock_movements`
+
+La regla correspondiente ahora permite:
+
+- Crear
+- Leer
+- Eliminar
+
+siempre que el documento pertenezca al negocio cuyo propietario coincide con el usuario autenticado.
+
+### Estado
+
+**Funcional y probado.**
+
+Se verificó que la opción **Reiniciar datos** puede ejecutarse correctamente después de publicar las reglas actualizadas de Firestore.
+
+---
+
+# 13. Tema visual
+
+BizzFlow cuenta actualmente con soporte visual para:
+
+- Tema claro
+- Tema oscuro
+
+### Tema oscuro
+
+Todas las pantallas principales fueron adaptadas para funcionar correctamente en modo oscuro.
+
+El criterio visual utilizado es:
+
+- Mantener la identidad visual existente.
+- Evitar fondos o componentes con blancos incorrectos en modo oscuro.
+- Mantener el color principal de la aplicación.
+- Oscurecer el color principal cuando sea necesario para botones y acciones en modo oscuro, en lugar de cambiarlo por otro color completamente diferente.
+- Mantener buena legibilidad de textos.
+- Mantener contraste suficiente entre fondos, tarjetas y controles.
+
+En Productos, por ejemplo, los botones de acción utilizan el color principal del tema y, en modo oscuro, una versión oscurecida del mismo color.
+
+### Estado
+
+**Tema claro y oscuro implementados y revisados en las pantallas actuales.**
+
+No se debe modificar la identidad cromática sin solicitud explícita.
+
+---
+
+# 14. Reglas de Firestore
 
 Las reglas actuales protegen:
 
-* users
-* businesses
-* categories
-* products
-* sales
-* customers
-* expenses
-* cash_movements
+- users
+- businesses
+- categories
+- products
+- sales
+- customers
+- expenses
+- cash_movements
+- stock_movements
 
 Los módulos que almacenan datos del negocio verifican que:
 
@@ -717,7 +789,36 @@ La regla fundamental es:
 
 **Un usuario nunca debe poder leer, modificar, eliminar o crear datos asociados a otro negocio.**
 
-Las reglas de `cash_movements` fueron agregadas y publicadas correctamente.
+### Stock movements
+
+La colección:
+
+`stock_movements`
+
+permite:
+
+- Crear
+- Leer
+- Eliminar
+
+siempre que el documento pertenezca a un negocio cuyo `ownerId` coincida con el usuario autenticado.
+
+Esto es necesario para que la función **Reiniciar datos** pueda eliminar correctamente los movimientos de stock del negocio.
+
+### Publicación de reglas
+
+Cuando se modifica `firestore.rules`, el archivo local no es suficiente.
+
+Las reglas deben publicarse mediante:
+
+```powershell
+firebase deploy --only firestore:rules
+
+```
+
+No considerar una modificación de reglas como terminada hasta confirmar que fue publicada correctamente.
+
+### Regla de trabajo
 
 Cuando sea necesario modificar las reglas:
 
@@ -725,56 +826,63 @@ Cuando sea necesario modificar las reglas:
 
 ---
 
-# 13. Estado actual del código
+# 15. Estado actual del código
 
 Actualmente:
 
-* `flutter analyze` se encuentra sin problemas después del último cambio realizado.
-* Caja está integrada al panel.
-* Caja puede crear movimientos.
-* Firestore permite guardar movimientos de Caja.
-* Los módulos principales están funcionales.
-* El MVP completo fue probado mediante un flujo integrado.
-* El Panel principal fue rediseñado y validado.
-* El Dashboard fue rediseñado y validado.
-* Ventas fue rediseñada visualmente.
-* Productos fue rediseñada visualmente.
-* Stock fue rediseñado visualmente.
-* La lógica de negocio existente se mantiene sin cambios por los rediseños visuales.
-* No se detectaron errores funcionales durante las validaciones realizadas.
+- Los módulos principales están implementados.
+- Caja está integrada al panel.
+- Caja puede crear movimientos.
+- Firestore permite guardar movimientos de Caja.
+- El MVP fue probado mediante un flujo integrado.
+- El Panel principal fue rediseñado y validado.
+- El Dashboard fue rediseñado y validado.
+- Ventas fue rediseñada visualmente.
+- Productos fue rediseñada visualmente.
+- Stock fue rediseñado visualmente.
+- El tema oscuro está aplicado a las pantallas actuales.
+- Los colores de acciones fueron adaptados para conservar la identidad visual en modo oscuro.
+- La lógica de negocio existente se mantiene en los rediseños visuales.
+- La opción Reiniciar datos funciona correctamente.
+- Las reglas de Firestore fueron ajustadas para permitir el borrado seguro de `stock_movements`.
+- No se detectaron errores funcionales durante las validaciones realizadas.
 
 ### Estado de rediseño visual
 
-Actualmente las siguientes pantallas cuentan con rediseño visual:
+Actualmente cuentan con rediseño visual:
 
-* `lib/screens/business_setup_screen.dart`
-* `lib/screens/dashboard_screen.dart`
-* `lib/screens/sales_screen.dart`
-* `lib/screens/products_screen.dart`
-* `lib/screens/stock_screen.dart`
+- `lib/screens/business_setup_screen.dart`
+- `lib/screens/dashboard_screen.dart`
+- `lib/screens/sales_screen.dart`
+- `lib/screens/products_screen.dart`
+- `lib/screens/stock_screen.dart`
 
-Las siguientes pantallas todavía pueden recibir rediseño visual:
+Las siguientes pantallas pueden recibir mejoras visuales adicionales si se considera necesario:
 
-* `lib/screens/customers_screen.dart`
-* `lib/screens/expenses_screen.dart`
-* `lib/screens/cash_screen.dart`
-* `lib/screens/categories_screen.dart`
+- `lib/screens/customers_screen.dart`
+- `lib/screens/expenses_screen.dart`
+- `lib/screens/cash_screen.dart`
+- `lib/screens/categories_screen.dart`
+
+Sin embargo, el soporte de **tema oscuro ya está implementado en las pantallas actuales** y no debe considerarse una tarea pendiente general.
 
 ### Archivos modificados durante la etapa actual de rediseño
 
-* `lib/screens/business_setup_screen.dart`
-* `lib/screens/dashboard_screen.dart`
-* `lib/screens/sales_screen.dart`
-* `lib/screens/products_screen.dart`
-* `lib/screens/stock_screen.dart`
+- `lib/screens/business_setup_screen.dart`
+- `lib/screens/dashboard_screen.dart`
+- `lib/screens/sales_screen.dart`
+- `lib/screens/products_screen.dart`
+- `lib/screens/stock_screen.dart`
 
-El archivo:
+También pueden existir modificaciones en:
 
-`PROJECT_CONTEXT.md`
+- `lib/screens/profile_screen.dart`
+- `firestore.rules`
+- `PROJECT_CONTEXT.md`
 
-también se actualiza para documentar el estado del proyecto.
+según las correcciones realizadas posteriormente.
 
-Los cambios visuales deben conservarse y no deben descartarse antes del commit correspondiente.
+Los cambios visuales y funcionales deben conservarse y no deben descartarse antes del commit correspondiente.
 
 No se debe asumir que una nueva funcionalidad está terminada hasta comprobar:
 
@@ -786,7 +894,7 @@ No se debe asumir que una nueva funcionalidad está terminada hasta comprobar:
 
 ---
 
-# 14. Validación general realizada
+# 16. Validación general realizada
 
 Se realizó una prueba integrada del MVP utilizando datos de prueba.
 
@@ -798,34 +906,34 @@ Flujo probado:
 
 Se utilizó:
 
-* Producto: Coca Cola
-* Stock inicial: 5
-* Precio unitario: `$1000`
-* Cantidad vendida: 2
+- Producto: Coca Cola
+- Stock inicial: 5
+- Precio unitario: `$1000`
+- Cantidad vendida: 2
 
 Resultado esperado y comprobado:
 
-* Total de venta: `$2000`
-* Stock restante: `3`
+- Total de venta: `$2000`
+- Stock restante: `3`
 
 ### Prueba de gastos
 
 Se registró:
 
-* Gasto de prueba: `$500`
+- Gasto de prueba: `$500`
 
 Resultado:
 
-* Gastos del día: `$500`
-* Resultado del día: `$1500`
+- Gastos del día: `$500`
+- Resultado del día: `$1500`
 
 ### Prueba de Caja
 
 Resultado:
 
-* Ingresos: `$2000`
-* Egresos: `$500`
-* Saldo: `$1500`
+- Ingresos: `$2000`
+- Egresos: `$500`
+- Saldo: `$1500`
 
 Los movimientos aparecen correctamente en Dashboard y Caja.
 
@@ -833,27 +941,27 @@ Los movimientos aparecen correctamente en Dashboard y Caja.
 
 Se comprobó:
 
-* Crear cliente
-* Visualizar cliente
-* Editar cliente
-* Eliminar cliente
+- Crear cliente
+- Visualizar cliente
+- Editar cliente
+- Eliminar cliente
 
 ### Prueba del rediseño visual
 
 Se comprobó:
 
-* Panel principal rediseñado
-* Navegación desde el nuevo panel
-* Dashboard rediseñado
-* Ventas rediseñadas
-* Productos rediseñados
-* Stock rediseñado
-* Visualización de métricas
-* Visualización de stock
-* Diseño responsive
-* Animaciones y efectos visuales
-* Conservación de los datos existentes
-* Conservación de la lógica de Firebase y Firestore
+- Panel principal rediseñado
+- Navegación desde el nuevo panel
+- Dashboard rediseñado
+- Ventas rediseñadas
+- Productos rediseñados
+- Stock rediseñado
+- Visualización de métricas
+- Visualización de stock
+- Diseño responsive
+- Animaciones y efectos visuales
+- Conservación de los datos existentes
+- Conservación de la lógica de Firebase y Firestore
 
 ### Validación de Stock
 
@@ -867,27 +975,41 @@ Resultado:
 
 Se verificó que el rediseño conserva:
 
-* Consulta de productos mediante `businessId`
-* Orden alfabético
-* Estado del stock
-* Agregado de stock
-* Transacción Firestore
-* Validación de pertenencia al negocio
-* Mensajes de éxito y error
+- Consulta de productos mediante `businessId`
+- Orden alfabético
+- Estado del stock
+- Agregado de stock
+- Transacción Firestore
+- Validación de pertenencia al negocio
+- Mensajes de éxito y error
+
+### Validación de Reiniciar datos
+
+Se verificó la funcionalidad de:
+
+**Mi Perfil → Reiniciar datos**
+
+El proceso inicialmente presentó un error de permisos debido a que `stock_movements` no permitía eliminación.
+
+Se corrigieron las reglas de Firestore para permitir el borrado seguro de dichos documentos.
+
+Después de publicar las reglas actualizadas:
+
+**Reiniciar datos funciona correctamente.**
 
 ### Resultado de la validación
 
-**El MVP actual funciona correctamente en las pruebas realizadas y cuenta con un rediseño visual validado para Panel principal, Dashboard, Ventas, Productos y Stock.**
+**El MVP actual funciona correctamente en las pruebas realizadas y cuenta con un rediseño visual validado para Panel principal, Dashboard, Ventas, Productos y Stock, además de soporte de tema oscuro y una función de reinicio de datos correctamente protegida.**
 
 ---
 
-# 15. Preferencias de trabajo del usuario
+# 17. Preferencias de trabajo del usuario
 
 El usuario trabaja con:
 
-* Windows
-* PowerShell
-* Cursor
+- Windows
+- PowerShell
+- Cursor
 
 ### Preferencia fundamental
 
@@ -919,18 +1041,19 @@ No avanzar al siguiente objetivo si `flutter analyze` tiene errores.
 
 ---
 
-# 16. Git
+# 18. Git
 
 El repositorio utiliza:
 
-* Git
-* GitHub
-* Rama principal: `main`
+- Git
+- GitHub
+- Rama principal: `main`
 
 Antes de realizar un commit:
 
 ```powershell
 git status
+
 ```
 
 Revisar que solamente estén presentes los cambios esperados.
@@ -941,50 +1064,65 @@ Después:
 git add .
 git commit -m "Mensaje descriptivo"
 git push
+
 ```
 
 No realizar commits con cambios desconocidos o no relacionados.
 
 ---
 
-# 17. Próximos pasos
+# 19. Próximos pasos
 
-## Paso 1 — Guardar el rediseño actual
+## Paso 1 — Guardar el estado actual
 
-El MVP ya fue validado funcionalmente.
+El estado funcional y visual actual está validado.
 
-Actualmente cuentan con rediseño visual:
+Actualmente cuentan con:
 
-- Panel principal
-- Dashboard
-- Ventas
-- Productos
-- Stock
+- Panel principal rediseñado.
+- Dashboard rediseñado.
+- Ventas rediseñadas.
+- Productos rediseñados.
+- Stock rediseñado.
+- Tema oscuro aplicado.
+- Tema claro conservado.
+- Reinicio de datos funcional.
+- Reglas de Firestore ajustadas para el reinicio.
+- MVP funcional.
 
 Pendiente inmediato:
 
 - Reemplazar `PROJECT_CONTEXT.md` con esta versión actualizada.
 - Ejecutar `git status`.
 - Confirmar que los cambios correspondan únicamente a lo esperado.
-- Crear commit.
-- Push a GitHub.
-
-Los archivos modificados esperados actualmente son:
-
-- `lib/screens/business_setup_screen.dart`
-- `lib/screens/dashboard_screen.dart`
-- `lib/screens/sales_screen.dart`
-- `lib/screens/products_screen.dart`
-- `lib/screens/stock_screen.dart`
-- `PROJECT_CONTEXT.md`
+- No realizar commit ni push hasta revisar el estado.
 
 ---
 
-## Paso 2 — Continuar el rediseño visual
+## Paso 2 — Revisar funcionalidad antes de agregar nuevas características
 
-Una vez guardado el estado actual, continuar con el rediseño visual de los módulos restantes.
+La prioridad siguiente no es modificar nuevamente el tema oscuro.
 
-Orden sugerido:
+Se debe revisar el funcionamiento completo de los módulos existentes y detectar posibles problemas de lógica o integración.
+
+Especial atención a:
+
+1. Ventas + Stock
+2. Ventas + Caja
+3. Gastos + Caja
+4. Dashboard
+5. Clientes
+6. Categorías
+7. Productos
+8. Reiniciar datos
+
+El objetivo es garantizar que los módulos trabajen correctamente entre sí.
+
+---
+
+## Paso 3 — Mejoras visuales restantes
+
+Si después de revisar la funcionalidad se considera necesario, continuar con mejoras visuales de:
 
 1. Clientes
 2. Gastos
@@ -992,27 +1130,14 @@ Orden sugerido:
 4. Categorías
 5. Pantallas secundarias
 
-Cada pantalla deberá validarse individualmente antes de continuar con la siguiente.
+No modificar una pantalla únicamente por modificarla.
 
-El objetivo es mantener una identidad visual consistente entre todos los módulos.
+Cada cambio visual debe aportar:
 
----
-
-## Paso 3 — Evaluar ajustes del MVP
-
-Después de completar el rediseño visual, evaluar únicamente mejoras que aporten valor real.
-
-Un posible ajuste identificado durante las pruebas es revisar el criterio de:
-
-**Stock bajo**
-
-Actualmente:
-
-- `0`: sin stock
-- `1–5`: stock bajo
-- `>5`: stock disponible
-
-No modificarlo hasta decidir el comportamiento definitivo.
+- Mejor legibilidad
+- Mejor organización
+- Mejor experiencia de usuario
+- Consistencia con el resto de BizzFlow
 
 ---
 
@@ -1039,7 +1164,7 @@ No agregar gráficos o reportes complejos sin necesidad.
 
 ---
 
-# 18. Alcance actual
+# 20. Alcance actual
 
 No agregar todavía:
 
@@ -1062,23 +1187,7 @@ La prioridad actual es:
 
 La etapa actual se centra principalmente en:
 
-**UI/UX + consistencia visual + validación del MVP.**
+**funcionalidad + consistencia visual + UX + seguridad + validación del MVP.**
 
-```
-
-### Ahora
-
-Reemplazá **todo** el `PROJECT_CONTEXT.md` con ese contenido.
-
-Después ejecutá solamente:
-
-```powershell
-git status
-```
-
-**Todavía no hagas commit ni push.** Primero vemos qué archivos aparecen y comprobamos que sean exactamente los esperados.
-
-```
-
-```
+No comenzar nuevas funcionalidades grandes hasta comprobar que los módulos existentes funcionan correctamente de punta a punta.
 

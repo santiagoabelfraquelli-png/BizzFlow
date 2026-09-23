@@ -4,8 +4,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import 'firebase_options.dart';
-import 'package:bizzflow/screens/auth_screen.dart';
-import 'package:bizzflow/screens/business_setup_screen.dart';
+import 'screens/auth_screen.dart';
+import 'screens/business_setup_screen.dart';
+import 'services/app_preferences.dart';
+import 'services/theme_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,28 +16,68 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  runApp(const BizzFlowApp());
+  final appPreferences = AppPreferences.instance;
+
+  await ThemeController.instance.load();
+
+  runApp(
+    BizzFlowApp(
+      appPreferences: appPreferences,
+    ),
+  );
 }
 
 class BizzFlowApp extends StatelessWidget {
-  const BizzFlowApp({super.key});
+  final AppPreferences appPreferences;
+
+  const BizzFlowApp({
+    super.key,
+    required this.appPreferences,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'BizzFlow',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
-        useMaterial3: true,
-      ),
-      home: const AppRouter(),
+    return AnimatedBuilder(
+      animation: ThemeController.instance,
+      builder: (context, _) {
+        return MaterialApp(
+          title: 'BizzFlow',
+          debugShowCheckedModeBanner: false,
+
+          themeMode: ThemeController.instance.themeMode,
+
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.indigo,
+              brightness: Brightness.light,
+            ),
+            useMaterial3: true,
+          ),
+
+          darkTheme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.indigo,
+              brightness: Brightness.dark,
+            ),
+            useMaterial3: true,
+          ),
+
+          home: AppRouter(
+            appPreferences: appPreferences,
+          ),
+        );
+      },
     );
   }
 }
 
 class AppRouter extends StatelessWidget {
-  const AppRouter({super.key});
+  final AppPreferences appPreferences;
+
+  const AppRouter({
+    super.key,
+    required this.appPreferences,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -44,14 +86,18 @@ class AppRouter extends StatelessWidget {
       builder: (context, authSnapshot) {
         if (authSnapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
           );
         }
 
         final user = authSnapshot.data;
 
         if (user == null) {
-          return const AuthScreen();
+          return AuthScreen(
+            appPreferences: appPreferences,
+          );
         }
 
         return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
@@ -62,18 +108,23 @@ class AppRouter extends StatelessWidget {
           builder: (context, userSnapshot) {
             if (userSnapshot.connectionState == ConnectionState.waiting) {
               return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
+                body: Center(
+                  child: CircularProgressIndicator(),
+                ),
               );
             }
 
             final data = userSnapshot.data?.data();
             final businessId = data?['businessId'];
 
-            if (businessId == null || businessId.toString().trim().isEmpty) {
+            if (businessId == null ||
+                businessId.toString().trim().isEmpty) {
               return const BusinessSetupScreen();
             }
 
-            return BusinessHomeScreen(businessId: businessId.toString());
+            return BusinessHomeScreen(
+              businessId: businessId.toString(),
+            );
           },
         );
       },
