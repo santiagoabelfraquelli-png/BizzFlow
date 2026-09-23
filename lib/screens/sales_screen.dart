@@ -34,12 +34,17 @@ class _CartItem {
 class _SalesScreenState extends State<SalesScreen> {
   final Map<String, _CartItem> _cart = <String, _CartItem>{};
   bool _isSaving = false;
+  String? _selectedCustomerId;
+  String? _selectedCustomerName;
 
   CollectionReference<Map<String, dynamic>> get _productsRef =>
       FirebaseFirestore.instance.collection('products');
 
   CollectionReference<Map<String, dynamic>> get _salesRef =>
       FirebaseFirestore.instance.collection('sales');
+
+  CollectionReference<Map<String, dynamic>> get _customersRef =>
+      FirebaseFirestore.instance.collection('customers');
 
   double get _total => _cart.values.fold<double>(
         0,
@@ -79,13 +84,11 @@ class _SalesScreenState extends State<SalesScreen> {
     }
 
     final existingItem = _cart[document.id];
-
     if (existingItem != null) {
       if (existingItem.quantity + 1 > stock) {
         _showMessage('No hay suficiente stock de "$name".');
         return;
       }
-
       if (!mounted) return;
       setState(() {
         existingItem.quantity += 1;
@@ -109,6 +112,85 @@ class _SalesScreenState extends State<SalesScreen> {
     if (!mounted) return;
     setState(() {
       _cart.remove(productId);
+    });
+  }
+
+  Future<void> _selectCustomer() async {
+    final snapshot = await _customersRef
+        .where('businessId', isEqualTo: widget.businessId)
+        .get();
+
+    if (!mounted) return;
+
+    final customers = List<QueryDocumentSnapshot<Map<String, dynamic>>>.of(
+      snapshot.docs,
+    );
+
+    customers.sort((a, b) {
+      final nameA = _string(a.data()['name'], '').toLowerCase();
+      final nameB = _string(b.data()['name'], '').toLowerCase();
+      return nameA.compareTo(nameB);
+    });
+
+    if (customers.isEmpty) {
+      _showMessage('No hay clientes registrados todavía.');
+      return;
+    }
+
+    final selected = await showDialog<QueryDocumentSnapshot<Map<String, dynamic>>>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Seleccionar cliente'),
+          content: SizedBox(
+            width: 420,
+            height: 420,
+            child: ListView.separated(
+              itemCount: customers.length,
+              separatorBuilder: (_, _) => const Divider(height: 1),
+              itemBuilder: (context, index) {
+                final customer = customers[index];
+                final data = customer.data();
+                final name = _string(data['name'], 'Sin nombre');
+                final phone = _string(data['phone'], '');
+
+                return ListTile(
+                  leading: CircleAvatar(
+                    child: Text(
+                      name.isNotEmpty ? name[0].toUpperCase() : '?',
+                    ),
+                  ),
+                  title: Text(name),
+                  subtitle: phone.isEmpty ? null : Text(phone),
+                  onTap: () => Navigator.of(dialogContext).pop(customer),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancelar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (!mounted || selected == null) return;
+
+    final data = selected.data();
+    setState(() {
+      _selectedCustomerId = selected.id;
+      _selectedCustomerName = _string(data['name'], 'Sin nombre');
+    });
+  }
+
+  void _clearCustomer() {
+    if (!mounted) return;
+    setState(() {
+      _selectedCustomerId = null;
+      _selectedCustomerName = null;
     });
   }
 
@@ -149,9 +231,30 @@ class _SalesScreenState extends State<SalesScreen> {
 
     try {
       final cartItems = List<_CartItem>.of(_cart.values);
+      final selectedCustomerId = _selectedCustomerId;
+      final selectedCustomerName = _selectedCustomerName;
 
       await FirebaseFirestore.instance.runTransaction(
         (transaction) async {
+          DocumentSnapshot<Map<String, dynamic>>? customerSnapshot;
+
+          if (selectedCustomerId != null) {
+            final customerRef = _customersRef.doc(selectedCustomerId);
+            customerSnapshot = await transaction.get(customerRef);
+
+            if (!customerSnapshot.exists) {
+              throw Exception('El cliente seleccionado ya no existe.');
+            }
+
+            final customerData = customerSnapshot.data();
+            if (customerData == null ||
+                customerData['businessId'] != widget.businessId) {
+              throw Exception(
+                'El cliente seleccionado no pertenece a este negocio.',
+              );
+            }
+          }
+
           final productSnapshots =
               <String, DocumentSnapshot<Map<String, dynamic>>>{};
 
@@ -233,21 +336,32 @@ class _SalesScreenState extends State<SalesScreen> {
           }
 
           final saleRef = _salesRef.doc();
-          transaction.set(saleRef, <String, dynamic>{
+          final saleData = <String, dynamic>{
             'businessId': widget.businessId,
             'items': saleItems,
             'total': saleTotal,
             'createdAt': FieldValue.serverTimestamp(),
-          });
+          };
+
+          if (selectedCustomerId != null && customerSnapshot != null) {
+            final customerData = customerSnapshot.data();
+            saleData['customerId'] = selectedCustomerId;
+            saleData['customerName'] = _string(
+              customerData?['name'],
+              selectedCustomerName ?? 'Cliente',
+            );
+          }
+
+          transaction.set(saleRef, saleData);
         },
       );
 
       if (!mounted) return;
-
       setState(() {
         _cart.clear();
+        _selectedCustomerId = null;
+        _selectedCustomerName = null;
       });
-
       _showMessage('Venta registrada correctamente.');
     } on FirebaseException catch (e) {
       if (!mounted) return;
@@ -270,7 +384,6 @@ class _SalesScreenState extends State<SalesScreen> {
 
   void _showMessage(String message) {
     if (!mounted) return;
-
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
@@ -341,9 +454,9 @@ class _SalesScreenState extends State<SalesScreen> {
                   return _buildErrorState(theme, snapshot.error.toString());
                 }
 
-                final documents = List<QueryDocumentSnapshot<Map<String, dynamic>>>.of(
-                  snapshot.data?.docs ?? <QueryDocumentSnapshot<Map<String, dynamic>>>[],
-                );
+                final documents = List<
+                    QueryDocumentSnapshot<Map<String, dynamic>>>
+                  .of(snapshot.data?.docs ?? <QueryDocumentSnapshot<Map<String, dynamic>>>[]);
 
                 documents.sort((a, b) {
                   final nameA = _string(a.data()['name'], '');
@@ -601,8 +714,74 @@ class _SalesScreenState extends State<SalesScreen> {
     );
   }
 
+  Widget _buildCustomerSelector(ThemeData theme) {
+    final hasCustomer = _selectedCustomerId != null;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.12),
+        ),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.12),
+            child: Icon(
+              Icons.person_outline_rounded,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  hasCustomer ? 'Cliente' : 'Cliente opcional',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  hasCustomer
+                      ? (_selectedCustomerName ?? 'Cliente seleccionado')
+                      : 'Consumidor final',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ],
+            ),
+          ),
+          if (hasCustomer)
+            IconButton(
+              tooltip: 'Quitar cliente',
+              onPressed: _isSaving ? null : _clearCustomer,
+              icon: const Icon(Icons.close_rounded),
+            ),
+          OutlinedButton.icon(
+            onPressed: _isSaving ? null : _selectCustomer,
+            icon: Icon(
+              hasCustomer
+                  ? Icons.swap_horiz_rounded
+                  : Icons.person_search_outlined,
+            ),
+            label: Text(hasCustomer ? 'Cambiar' : 'Elegir'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildCart(ThemeData theme) {
-    final cartHeight = (_cart.length * 58.0 + 150.0).clamp(210.0, 310.0);
+    final cartHeight = (_cart.length * 58.0 + 225.0).clamp(285.0, 420.0);
 
     return Material(
       elevation: 16,
@@ -713,6 +892,8 @@ class _SalesScreenState extends State<SalesScreen> {
                 ),
               ),
               const SizedBox(height: 8),
+              _buildCustomerSelector(theme),
+              const SizedBox(height: 10),
               SizedBox(
                 width: double.infinity,
                 height: 48,
@@ -725,7 +906,9 @@ class _SalesScreenState extends State<SalesScreen> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.check_circle_outline_rounded),
-                  label: Text(_isSaving ? 'Registrando...' : 'Confirmar venta'),
+                  label: Text(
+                    _isSaving ? 'Registrando...' : 'Confirmar venta',
+                  ),
                 ),
               ),
             ],

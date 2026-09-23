@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+import 'customer_detail_screen.dart';
+
 class CustomersScreen extends StatefulWidget {
   final String businessId;
 
@@ -34,11 +36,9 @@ class _CustomersScreenState extends State<CustomersScreen> {
     DocumentSnapshot<Map<String, dynamic>>? customer,
   }) async {
     final data = customer?.data();
-
     _nameController.text = data?['name']?.toString() ?? '';
     _phoneController.text = data?['phone']?.toString() ?? '';
     _emailController.text = data?['email']?.toString() ?? '';
-
     final isEditing = customer != null;
 
     await showDialog<void>(
@@ -80,9 +80,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 }
 
                 if (!mounted || !dialogContext.mounted) return;
-
                 Navigator.of(dialogContext).pop();
-
                 if (!mounted) return;
 
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -96,12 +94,9 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 );
               } catch (e) {
                 if (!mounted || !dialogContext.mounted) return;
-
                 ScaffoldMessenger.of(dialogContext).showSnackBar(
                   SnackBar(
-                    content: Text(
-                      'Error al guardar el cliente: $e',
-                    ),
+                    content: Text('Error al guardar el cliente: $e'),
                   ),
                 );
               } finally {
@@ -124,9 +119,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                       textCapitalization: TextCapitalization.words,
                       decoration: InputDecoration(
                         labelText: 'Nombre *',
-                        prefixIcon: const Icon(
-                          Icons.person_outline,
-                        ),
+                        prefixIcon: const Icon(Icons.person_outline),
                         filled: true,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
@@ -139,9 +132,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                       keyboardType: TextInputType.phone,
                       decoration: InputDecoration(
                         labelText: 'Teléfono',
-                        prefixIcon: const Icon(
-                          Icons.phone_outlined,
-                        ),
+                        prefixIcon: const Icon(Icons.phone_outlined),
                         filled: true,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
@@ -154,9 +145,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
                         labelText: 'Email',
-                        prefixIcon: const Icon(
-                          Icons.email_outlined,
-                        ),
+                        prefixIcon: const Icon(Icons.email_outlined),
                         filled: true,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
@@ -179,14 +168,10 @@ class _CustomersScreenState extends State<CustomersScreen> {
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : Text(
-                          isEditing
-                              ? 'Guardar cambios'
-                              : 'Crear cliente',
+                          isEditing ? 'Guardar cambios' : 'Crear cliente',
                         ),
                 ),
               ],
@@ -211,9 +196,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Eliminar cliente'),
-        content: Text(
-          '¿Seguro que querés eliminar a "$name"?',
-        ),
+        content: Text('¿Seguro que querés eliminar a "$name"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -231,33 +214,40 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
     try {
       await _customersRef.doc(customer.id).delete();
-
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Cliente eliminado correctamente.',
-          ),
+          content: Text('Cliente eliminado correctamente.'),
         ),
       );
     } catch (e) {
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'Error al eliminar el cliente: $e',
-          ),
+          content: Text('Error al eliminar el cliente: $e'),
         ),
       );
     }
   }
 
-  Widget _buildHeader(
-    BuildContext context,
-    int count,
+  void _openCustomerDetail(
+    DocumentSnapshot<Map<String, dynamic>> customer,
   ) {
+    final data = customer.data();
+    final name = data?['name']?.toString() ?? 'Cliente';
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CustomerDetailScreen(
+          businessId: widget.businessId,
+          customerId: customer.id,
+          customerName: name,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, int count) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
@@ -315,112 +305,116 @@ class _CustomersScreenState extends State<CustomersScreen> {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final data = customer.data();
-
     final name = data?['name']?.toString() ?? '';
     final phone = data?['phone']?.toString() ?? '';
     final email = data?['email']?.toString() ?? '';
-
-    final initial = name.isNotEmpty
-        ? name[0].toUpperCase()
-        : '?';
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(
-          color: colors.outlineVariant,
-        ),
+        side: BorderSide(color: colors.outlineVariant),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 27,
-              backgroundColor: colors.primaryContainer,
-              child: Text(
-                initial,
-                style: TextStyle(
-                  color: colors.onPrimaryContainer,
-                  fontSize: 19,
-                  fontWeight: FontWeight.w800,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => _openCustomerDetail(customer),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 27,
+                backgroundColor: colors.primaryContainer,
+                child: Text(
+                  initial,
+                  style: TextStyle(
+                    color: colors.onPrimaryContainer,
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  if (phone.isNotEmpty) ...[
-                    const SizedBox(height: 6),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      phone,
+                      name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  ],
-                  if (email.isNotEmpty) ...[
-                    const SizedBox(height: 4),
+                    if (phone.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        phone,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                    if (email.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        email,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                    if (phone.isEmpty && email.isEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        'Sin datos de contacto',
+                        style: TextStyle(
+                          color: colors.onSurfaceVariant,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
                     Text(
-                      email,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                  if (phone.isEmpty && email.isEmpty) ...[
-                    const SizedBox(height: 6),
-                    Text(
-                      'Sin datos de contacto',
+                      'Tocá para ver historial de compras',
                       style: TextStyle(
-                        color: colors.onSurfaceVariant,
-                        fontStyle: FontStyle.italic,
+                        color: colors.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ],
+                ),
+              ),
+              PopupMenuButton<String>(
+                onSelected: (value) {
+                  if (value == 'edit') {
+                    _showCustomerDialog(customer: customer);
+                  } else if (value == 'delete') {
+                    _deleteCustomer(customer);
+                  }
+                },
+                itemBuilder: (context) => const [
+                  PopupMenuItem(
+                    value: 'edit',
+                    child: Text('Editar'),
+                  ),
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Text('Eliminar'),
+                  ),
                 ],
               ),
-            ),
-            PopupMenuButton<String>(
-              onSelected: (value) {
-                if (value == 'edit') {
-                  _showCustomerDialog(
-                    customer: customer,
-                  );
-                } else if (value == 'delete') {
-                  _deleteCustomer(customer);
-                }
-              },
-              itemBuilder: (context) => const [
-                PopupMenuItem(
-                  value: 'edit',
-                  child: Text('Editar'),
-                ),
-                PopupMenuItem(
-                  value: 'delete',
-                  child: Text('Eliminar'),
-                ),
-              ],
-            ),
-          ],
+              const Icon(Icons.chevron_right_rounded),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildEmptyState(
-    BuildContext context,
-  ) {
+  Widget _buildEmptyState(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
@@ -459,12 +453,8 @@ class _CustomersScreenState extends State<CustomersScreen> {
             const SizedBox(height: 26),
             FilledButton.icon(
               onPressed: _showCustomerDialog,
-              icon: const Icon(
-                Icons.person_add_outlined,
-              ),
-              label: const Text(
-                'Agregar cliente',
-              ),
+              icon: const Icon(Icons.person_add_outlined),
+              label: const Text('Agregar cliente'),
             ),
           ],
         ),
@@ -480,26 +470,17 @@ class _CustomersScreenState extends State<CustomersScreen> {
       appBar: AppBar(
         title: const Text(
           'Clientes',
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-          ),
+          style: TextStyle(fontWeight: FontWeight.w800),
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showCustomerDialog,
-        icon: const Icon(
-          Icons.person_add_outlined,
-        ),
-        label: const Text(
-          'Nuevo cliente',
-        ),
+        icon: const Icon(Icons.person_add_outlined),
+        label: const Text('Nuevo cliente'),
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: _customersRef
-            .where(
-              'businessId',
-              isEqualTo: widget.businessId,
-            )
+            .where('businessId', isEqualTo: widget.businessId)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
@@ -507,34 +488,25 @@ class _CustomersScreenState extends State<CustomersScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'Ocurrió un error al cargar los clientes.\n\n'
-                  '${snapshot.error}',
+                  'Ocurrió un error al cargar los clientes.\n\n${snapshot.error}',
                   textAlign: TextAlign.center,
                 ),
               ),
             );
           }
 
-          if (snapshot.connectionState ==
-              ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
           }
 
           final customers = snapshot.data?.docs.toList() ??
-              <DocumentSnapshot<Map<String, dynamic>>>[];
+              <QueryDocumentSnapshot<Map<String, dynamic>>>[];
 
           customers.sort((a, b) {
             final dataA = a.data();
             final dataB = b.data();
-
-            final nameA =
-                dataA?['name']?.toString().toLowerCase() ?? '';
-
-            final nameB =
-                dataB?['name']?.toString().toLowerCase() ?? '';
-
+            final nameA = dataA['name']?.toString().toLowerCase() ?? '';
+            final nameB = dataB['name']?.toString().toLowerCase() ?? '';
             return nameA.compareTo(nameB);
           });
 
@@ -545,9 +517,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
           return LayoutBuilder(
             builder: (context, constraints) {
               final horizontalPadding =
-                  constraints.maxWidth >= 900
-                      ? 32.0
-                      : 16.0;
+                  constraints.maxWidth >= 900 ? 32.0 : 16.0;
 
               return ListView(
                 padding: EdgeInsets.fromLTRB(
@@ -557,10 +527,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                   110,
                 ),
                 children: [
-                  _buildHeader(
-                    context,
-                    customers.length,
-                  ),
+                  _buildHeader(context, customers.length),
                   const SizedBox(height: 20),
                   Text(
                     'Listado de clientes',
