@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import 'package:bizzflow/services/app_preferences.dart';
+import 'package:ordivo/services/app_preferences.dart';
 
 class AuthScreen extends StatefulWidget {
   final AppPreferences appPreferences;
@@ -208,7 +208,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         ),
                         const SizedBox(height: 18),
                         Text(
-                          'BizzFlow',
+                          'ORDIVO',
                           style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
                         ),
                         const SizedBox(height: 6),

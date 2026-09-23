@@ -2,8 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import 'package:bizzflow/services/app_preferences.dart';
-import 'package:bizzflow/services/theme_controller.dart';
+import 'package:ordivo/services/app_preferences.dart';
+import 'package:ordivo/services/theme_controller.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String businessId;
@@ -423,7 +423,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(height: 16),
                         _SectionCard(
                           title: 'Apariencia',
-                          subtitle: 'Personalizá cómo se ve BizzFlow en tu dispositivo.',
+                          subtitle: 'Personalizá cómo se ve ORDIVO en tu dispositivo.',
                           icon: Icons.palette_outlined,
                           child: SwitchListTile.adaptive(
                             contentPadding: EdgeInsets.zero,
@@ -438,8 +438,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                             subtitle: Text(
                               ThemeController.instance.isDarkMode
-                                  ? 'BizzFlow está usando el tema oscuro.'
-                                  : 'BizzFlow está usando el tema claro.',
+                                  ? 'ORDIVO está usando el tema oscuro.'
+                                  : 'ORDIVO está usando el tema claro.',
                             ),
                             secondary: Icon(
                               ThemeController.instance.isDarkMode
@@ -451,7 +451,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(height: 16),
                         _SectionCard(
                           title: 'Inicio de sesión',
-                          subtitle: 'Elegí si BizzFlow debe recordar tu sesión al volver a abrir la aplicación.',
+                          subtitle: 'Elegí si ORDIVO debe recordar tu sesión al volver a abrir la aplicación.',
                           icon: Icons.login_rounded,
                           child: SwitchListTile.adaptive(
                             contentPadding: EdgeInsets.zero,

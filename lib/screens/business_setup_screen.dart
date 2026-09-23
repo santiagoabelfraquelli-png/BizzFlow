@@ -137,7 +137,7 @@ class _BusinessSetupScreenState extends State<BusinessSetupScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Primero necesitamos algunos datos para comenzar a usar BizzFlow.',
+                  'Primero necesitamos algunos datos para comenzar a usar ORDIVO.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: theme.colorScheme.onSurfaceVariant,
@@ -333,7 +333,7 @@ class BusinessHomeScreen extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             const Text(
-              'BizzFlow',
+              'ORDIVO',
               style: TextStyle(
                 fontWeight: FontWeight.w800,
                 letterSpacing: -0.5,

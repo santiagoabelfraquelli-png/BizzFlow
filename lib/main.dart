@@ -21,16 +21,16 @@ Future<void> main() async {
   await ThemeController.instance.load();
 
   runApp(
-    BizzFlowApp(
+    OrdivoApp(
       appPreferences: appPreferences,
     ),
   );
 }
 
-class BizzFlowApp extends StatelessWidget {
+class OrdivoApp extends StatelessWidget {
   final AppPreferences appPreferences;
 
-  const BizzFlowApp({
+  const OrdivoApp({
     super.key,
     required this.appPreferences,
   });
@@ -41,7 +41,7 @@ class BizzFlowApp extends StatelessWidget {
       animation: ThemeController.instance,
       builder: (context, _) {
         return MaterialApp(
-          title: 'BizzFlow',
+          title: 'ORDIVO',
           debugShowCheckedModeBanner: false,
 
           themeMode: ThemeController.instance.themeMode,
