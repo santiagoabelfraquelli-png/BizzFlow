@@ -15,7 +15,6 @@ class CategoriesScreen extends StatefulWidget {
 
 class _CategoriesScreenState extends State<CategoriesScreen> {
   final TextEditingController _nameController = TextEditingController();
-
   bool _isSaving = false;
 
   CollectionReference<Map<String, dynamic>> get _categoriesRef =>
@@ -29,14 +28,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
   Future<void> _createCategory() async {
     final name = _nameController.text.trim();
+    if (name.isEmpty) return;
 
-    if (name.isEmpty) {
-      return;
-    }
-
-    setState(() {
-      _isSaving = true;
-    });
+    setState(() => _isSaving = true);
 
     try {
       await _categoriesRef.add({
@@ -47,18 +41,13 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       });
 
       if (!mounted) return;
-
       _nameController.clear();
       Navigator.of(context).pop();
-
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Categoría creada correctamente.'),
-        ),
+        const SnackBar(content: Text('Categoría creada correctamente.')),
       );
     } on FirebaseException catch (e) {
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -68,32 +57,25 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       );
     } finally {
       if (mounted) {
-        setState(() {
-          _isSaving = false;
-        });
+        setState(() => _isSaving = false);
       }
     }
   }
 
-  Future<void> _deleteCategory(
-    String categoryId,
-    String categoryName,
-  ) async {
+  Future<void> _deleteCategory(String categoryId, String categoryName) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Eliminar categoría'),
-          content: Text(
-            '¿Querés eliminar la categoría "$categoryName"?',
-          ),
+          content: Text('¿Querés eliminar la categoría "$categoryName"?'),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
+              onPressed: () => Navigator.of(dialogContext).pop(false),
               child: const Text('Cancelar'),
             ),
             FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
               child: const Text('Eliminar'),
             ),
           ],
@@ -101,23 +83,16 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       },
     );
 
-    if (confirmed != true) {
-      return;
-    }
+    if (confirmed != true) return;
 
     try {
       await _categoriesRef.doc(categoryId).delete();
-
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Categoría eliminada.'),
-        ),
+        const SnackBar(content: Text('Categoría eliminada.')),
       );
     } on FirebaseException catch (e) {
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -133,44 +108,45 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
     showDialog<void>(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            final canSave = !_isSaving && _nameController.text.trim().isNotEmpty;
+
             return AlertDialog(
               title: const Text('Nueva categoría'),
               content: TextField(
                 controller: _nameController,
                 autofocus: true,
                 textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Nombre',
                   hintText: 'Ej. Bebidas',
-                  border: OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.category_outlined),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
-                onChanged: (_) {
-                  setDialogState(() {});
-                },
+                onChanged: (_) => setDialogState(() {}),
               ),
               actions: [
                 TextButton(
                   onPressed: _isSaving
                       ? null
-                      : () => Navigator.of(context).pop(),
+                      : () => Navigator.of(dialogContext).pop(),
                   child: const Text('Cancelar'),
                 ),
                 FilledButton(
-                  onPressed: _isSaving || _nameController.text.trim().isEmpty
-                      ? null
-                      : () async {
+                  onPressed: canSave
+                      ? () async {
                           await _createCategory();
-                        },
+                        }
+                      : null,
                   child: _isSaving
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Text('Guardar'),
                 ),
@@ -184,9 +160,14 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Categorías'),
+        title: const Text(
+          'Categorías',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: _categoriesRef
@@ -197,69 +178,146 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
-                child: Text(
-                  'No se pudieron cargar las categorías.\n\n'
-                  '${snapshot.error}',
-                  textAlign: TextAlign.center,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.error_outline_rounded,
+                      size: 48,
+                      color: theme.colorScheme.error,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No se pudieron cargar las categorías.',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${snapshot.error}',
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
               ),
             );
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
           final categories = snapshot.data?.docs.toList() ?? [];
-
           categories.sort((a, b) {
             final nameA = (a.data()['name'] ?? '').toString().toLowerCase();
             final nameB = (b.data()['name'] ?? '').toString().toLowerCase();
-
             return nameA.compareTo(nameB);
           });
 
           if (categories.isEmpty) {
-            return const Center(
+            return Center(
               child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Text(
-                  'Todavía no tenés categorías.\n'
-                  'Creá la primera con el botón +.',
-                  textAlign: TextAlign.center,
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 88,
+                      height: 88,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.category_outlined,
+                        size: 42,
+                        color: theme.colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Todavía no tenés categorías',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Creá una categoría para organizar tus productos.',
+                      style: theme.textTheme.bodyMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
               ),
             );
           }
 
           return ListView.separated(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
             itemCount: categories.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 8),
+            separatorBuilder: (_, _) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
               final doc = categories[index];
               final data = doc.data();
-
               final name = (data['name'] ?? 'Sin nombre').toString();
               final active = data['active'] != false;
 
               return Card(
-                child: ListTile(
-                  leading: const CircleAvatar(
-                    child: Icon(Icons.category_outlined),
+                elevation: 0,
+                margin: EdgeInsets.zero,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                  side: BorderSide(
+                    color: theme.colorScheme.outlineVariant,
                   ),
-                  title: Text(name),
-                  subtitle: Text(
-                    active ? 'Activa' : 'Inactiva',
+                ),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 7,
+                  ),
+                  leading: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(
+                      Icons.category_outlined,
+                      color: theme.colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+                  title: Text(
+                    name,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  subtitle: Padding(
+                    padding: const EdgeInsets.only(top: 5),
+                    child: Row(
+                      children: [
+                        Icon(
+                          active
+                              ? Icons.check_circle_outline
+                              : Icons.pause_circle_outline,
+                          size: 16,
+                          color: active
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.outline,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(active ? 'Activa' : 'Inactiva'),
+                      ],
+                    ),
                   ),
                   trailing: IconButton(
                     tooltip: 'Eliminar',
-                    icon: const Icon(Icons.delete_outline),
-                    onPressed: () {
-                      _deleteCategory(doc.id, name);
-                    },
+                    icon: const Icon(Icons.delete_outline_rounded),
+                    onPressed: () => _deleteCategory(doc.id, name),
                   ),
                 ),
               );
@@ -269,8 +327,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showCreateCategoryDialog,
-        icon: const Icon(Icons.add),
-        label: const Text('Categoría'),
+        icon: const Icon(Icons.add_rounded),
+        label: const Text(
+          'Categoría',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
       ),
     );
   }

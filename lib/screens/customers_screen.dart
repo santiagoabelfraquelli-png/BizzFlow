@@ -15,7 +15,6 @@ class CustomersScreen extends StatefulWidget {
 
 class _CustomersScreenState extends State<CustomersScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -55,7 +54,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
               final email = _emailController.text.trim();
 
               if (name.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                ScaffoldMessenger.of(dialogContext).showSnackBar(
                   const SnackBar(
                     content: Text('Ingresá el nombre del cliente.'),
                   ),
@@ -63,9 +62,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 return;
               }
 
-              setDialogState(() {
-                isSaving = true;
-              });
+              setDialogState(() => isSaving = true);
 
               try {
                 final customerData = <String, dynamic>{
@@ -76,27 +73,19 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 };
 
                 if (isEditing) {
-                  await _customersRef
-                      .doc(customer.id)
-                      .update(customerData);
+                  await _customersRef.doc(customer.id).update(customerData);
                 } else {
-                  customerData['createdAt'] =
-                      FieldValue.serverTimestamp();
-
+                  customerData['createdAt'] = FieldValue.serverTimestamp();
                   await _customersRef.add(customerData);
                 }
 
-                if (!mounted || !dialogContext.mounted) {
-                  return;
-                }
+                if (!mounted || !dialogContext.mounted) return;
 
                 Navigator.of(dialogContext).pop();
 
-                if (!mounted) {
-                  return;
-                }
+                if (!mounted) return;
 
-                ScaffoldMessenger.of(this.context).showSnackBar(
+                ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
                       isEditing
@@ -106,9 +95,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                   ),
                 );
               } catch (e) {
-                if (!mounted || !dialogContext.mounted) {
-                  return;
-                }
+                if (!mounted || !dialogContext.mounted) return;
 
                 ScaffoldMessenger.of(dialogContext).showSnackBar(
                   SnackBar(
@@ -119,9 +106,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 );
               } finally {
                 if (dialogContext.mounted) {
-                  setDialogState(() {
-                    isSaving = false;
-                  });
+                  setDialogState(() => isSaving = false);
                 }
               }
             }
@@ -137,30 +122,45 @@ class _CustomersScreenState extends State<CustomersScreen> {
                     TextField(
                       controller: _nameController,
                       textCapitalization: TextCapitalization.words,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Nombre *',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.person_outline),
+                        prefixIcon: const Icon(
+                          Icons.person_outline,
+                        ),
+                        filled: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
                     TextField(
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Teléfono',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.phone_outlined),
+                        prefixIcon: const Icon(
+                          Icons.phone_outlined,
+                        ),
+                        filled: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
                     TextField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Email',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.email_outlined),
+                        prefixIcon: const Icon(
+                          Icons.email_outlined,
+                        ),
+                        filled: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
                     ),
                   ],
@@ -170,9 +170,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 TextButton(
                   onPressed: isSaving
                       ? null
-                      : () {
-                          Navigator.of(dialogContext).pop();
-                        },
+                      : () => Navigator.of(dialogContext).pop(),
                   child: const Text('Cancelar'),
                 ),
                 FilledButton(
@@ -211,50 +209,40 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Eliminar cliente'),
-          content: Text(
-            '¿Seguro que querés eliminar a "$name"?',
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Eliminar cliente'),
+        content: Text(
+          '¿Seguro que querés eliminar a "$name"?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(false);
-              },
-              child: const Text('Cancelar'),
-            ),
-            FilledButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(true);
-              },
-              child: const Text('Eliminar'),
-            ),
-          ],
-        );
-      },
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
     );
 
-    if (confirmed != true) {
-      return;
-    }
+    if (confirmed != true) return;
 
     try {
       await _customersRef.doc(customer.id).delete();
 
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Cliente eliminado correctamente.'),
+          content: Text(
+            'Cliente eliminado correctamente.',
+          ),
         ),
       );
     } catch (e) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -266,18 +254,245 @@ class _CustomersScreenState extends State<CustomersScreen> {
     }
   }
 
+  Widget _buildHeader(
+    BuildContext context,
+    int count,
+  ) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: colors.primaryContainer,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: colors.primary,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Icon(
+              Icons.people_alt_outlined,
+              color: colors.onPrimary,
+              size: 29,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Clientes',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  count == 1
+                      ? '1 cliente registrado'
+                      : '$count clientes registrados',
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCustomerCard(
+    BuildContext context,
+    DocumentSnapshot<Map<String, dynamic>> customer,
+  ) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final data = customer.data();
+
+    final name = data?['name']?.toString() ?? '';
+    final phone = data?['phone']?.toString() ?? '';
+    final email = data?['email']?.toString() ?? '';
+
+    final initial = name.isNotEmpty
+        ? name[0].toUpperCase()
+        : '?';
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: colors.outlineVariant,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 27,
+              backgroundColor: colors.primaryContainer,
+              child: Text(
+                initial,
+                style: TextStyle(
+                  color: colors.onPrimaryContainer,
+                  fontSize: 19,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  if (phone.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      phone,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  if (email.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      email,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  if (phone.isEmpty && email.isEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      'Sin datos de contacto',
+                      style: TextStyle(
+                        color: colors.onSurfaceVariant,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                if (value == 'edit') {
+                  _showCustomerDialog(
+                    customer: customer,
+                  );
+                } else if (value == 'delete') {
+                  _deleteCustomer(customer);
+                }
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(
+                  value: 'edit',
+                  child: Text('Editar'),
+                ),
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Text('Eliminar'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(
+    BuildContext context,
+  ) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 86,
+              height: 86,
+              decoration: BoxDecoration(
+                color: colors.primaryContainer,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.people_outline,
+                size: 42,
+                color: colors.primary,
+              ),
+            ),
+            const SizedBox(height: 22),
+            Text(
+              'Todavía no tenés clientes',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Agregá clientes para empezar a llevar un registro de tu negocio.',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 26),
+            FilledButton.icon(
+              onPressed: _showCustomerDialog,
+              icon: const Icon(
+                Icons.person_add_outlined,
+              ),
+              label: const Text(
+                'Agregar cliente',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Clientes'),
+        title: const Text(
+          'Clientes',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+          ),
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          _showCustomerDialog();
-        },
-        icon: const Icon(Icons.person_add),
-        label: const Text('Nuevo cliente'),
+        onPressed: _showCustomerDialog,
+        icon: const Icon(
+          Icons.person_add_outlined,
+        ),
+        label: const Text(
+          'Nuevo cliente',
+        ),
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: _customersRef
@@ -300,157 +515,67 @@ class _CustomersScreenState extends State<CustomersScreen> {
             );
           }
 
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (snapshot.connectionState ==
+              ConnectionState.waiting) {
             return const Center(
               child: CircularProgressIndicator(),
             );
           }
 
-          final customers = snapshot.data?.docs.toList() ?? [];
+          final customers = snapshot.data?.docs.toList() ??
+              <DocumentSnapshot<Map<String, dynamic>>>[];
 
           customers.sort((a, b) {
+            final dataA = a.data();
+            final dataB = b.data();
+
             final nameA =
-                a.data()['name']?.toString().toLowerCase() ?? '';
+                dataA?['name']?.toString().toLowerCase() ?? '';
+
             final nameB =
-                b.data()['name']?.toString().toLowerCase() ?? '';
+                dataB?['name']?.toString().toLowerCase() ?? '';
 
             return nameA.compareTo(nameB);
           });
 
           if (customers.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.people_outline,
-                      size: 72,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .primary,
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Todavía no tenés clientes',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Agregá clientes para empezar a llevar '
-                      'un registro de tu negocio.',
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 24),
-                    FilledButton.icon(
-                      onPressed: () {
-                        _showCustomerDialog();
-                      },
-                      icon: const Icon(Icons.person_add),
-                      label: const Text('Agregar cliente'),
-                    ),
-                  ],
-                ),
-              ),
-            );
+            return _buildEmptyState(context);
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.fromLTRB(
-              16,
-              16,
-              16,
-              100,
-            ),
-            itemCount: customers.length,
-            itemBuilder: (context, index) {
-              final customer = customers[index];
-              final data = customer.data();
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final horizontalPadding =
+                  constraints.maxWidth >= 900
+                      ? 32.0
+                      : 16.0;
 
-              final name = data['name']?.toString() ?? '';
-              final phone = data['phone']?.toString() ?? '';
-              final email = data['email']?.toString() ?? '';
-
-              final hasContactData =
-                  phone.isNotEmpty || email.isNotEmpty;
-
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    child: Text(
-                      name.isNotEmpty
-                          ? name.substring(0, 1).toUpperCase()
-                          : '?',
-                    ),
-                  ),
-                  title: Text(
-                    name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  subtitle: hasContactData
-                      ? Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
-                            children: [
-                              if (phone.isNotEmpty)
-                                Text('Teléfono: $phone'),
-                              if (email.isNotEmpty)
-                                Text('Email: $email'),
-                            ],
-                          ),
-                        )
-                      : const Padding(
-                          padding: EdgeInsets.only(top: 6),
-                          child: Text(
-                            'Sin datos de contacto',
-                          ),
-                        ),
-                  isThreeLine:
-                      phone.isNotEmpty && email.isNotEmpty,
-                  trailing: PopupMenuButton<String>(
-                    onSelected: (value) {
-                      if (value == 'edit') {
-                        _showCustomerDialog(
-                          customer: customer,
-                        );
-                      } else if (value == 'delete') {
-                        _deleteCustomer(customer);
-                      }
-                    },
-                    itemBuilder: (context) => const [
-                      PopupMenuItem(
-                        value: 'edit',
-                        child: Row(
-                          children: [
-                            Icon(Icons.edit_outlined),
-                            SizedBox(width: 8),
-                            Text('Editar'),
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete_outline),
-                            SizedBox(width: 8),
-                            Text('Eliminar'),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+              return ListView(
+                padding: EdgeInsets.fromLTRB(
+                  horizontalPadding,
+                  18,
+                  horizontalPadding,
+                  110,
                 ),
+                children: [
+                  _buildHeader(
+                    context,
+                    customers.length,
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Listado de clientes',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ...customers.map(
+                    (customer) => _buildCustomerCard(
+                      context,
+                      customer,
+                    ),
+                  ),
+                ],
               );
             },
           );

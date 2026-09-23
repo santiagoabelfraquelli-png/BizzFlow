@@ -1,277 +1,298 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-class CategoriesScreen extends StatefulWidget {
-final String businessId;
+class AuthScreen extends StatefulWidget {
+  const AuthScreen({super.key});
 
-const CategoriesScreen({
-super.key,
-required this.businessId,
-});
-
-@override
-State<CategoriesScreen> createState() => _CategoriesScreenState();
+  @override
+  State<AuthScreen> createState() => _AuthScreenState();
 }
 
-class _CategoriesScreenState extends State<CategoriesScreen> {
-final TextEditingController _nameController = TextEditingController();
+class _AuthScreenState extends State<AuthScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
 
-bool _isSaving = false;
+  bool _isLogin = true;
+  bool _isLoading = false;
+  bool _obscurePassword = true;
 
-CollectionReference<Map<String, dynamic>> get _categories {
-return FirebaseFirestore.instance.collection('categories');
-}
-
-Future<void> _createCategory() async {
-final name = _nameController.text.trim();
-
-if (name.isEmpty) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text('Ingresá un nombre para la categoría'),
-    ),
-  );
-  return;
-}
-
-final user = FirebaseAuth.instance.currentUser;
-
-if (user == null) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text('No hay un usuario autenticado'),
-    ),
-  );
-  return;
-}
-
-setState(() {
-  _isSaving = true;
-});
-
-try {
-  await _categories.add({
-    'businessId': widget.businessId,
-    'name': name,
-    'createdAt': FieldValue.serverTimestamp(),
-  });
-
-  _nameController.clear();
-
-  if (mounted) {
-    Navigator.of(context).pop();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Categoría creada correctamente'),
-      ),
-    );
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
-} catch (e) {
-  if (mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Error al crear categoría: $e'),
-      ),
-    );
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isLoading = true);
+
+    try {
+      if (_isLogin) {
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+      } else {
+        final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+        await credential.user?.sendEmailVerification();
+        if (mounted) {
+          _showMessage('Cuenta creada. Te enviamos un correo para verificar tu dirección.');
+        }
+      }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) _showMessage(_authErrorMessage(e.code), isError: true);
+    } catch (_) {
+      if (mounted) _showMessage('Ocurrió un error. Intentá nuevamente.', isError: true);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
-} finally {
-  if (mounted) {
+
+  Future<void> _resetPassword() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      _showMessage('Escribí tu correo electrónico para recuperar la contraseña.', isError: true);
+      return;
+    }
+
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      if (mounted) _showMessage('Te enviamos un correo para restablecer tu contraseña.');
+    } on FirebaseAuthException catch (e) {
+      if (mounted) _showMessage(_authErrorMessage(e.code), isError: true);
+    }
+  }
+
+  String _authErrorMessage(String code) {
+    switch (code) {
+      case 'invalid-email': return 'El correo electrónico no es válido.';
+      case 'user-not-found': return 'No existe una cuenta con ese correo.';
+      case 'wrong-password':
+      case 'invalid-credential': return 'El correo o la contraseña son incorrectos.';
+      case 'email-already-in-use': return 'Ya existe una cuenta con ese correo.';
+      case 'weak-password': return 'La contraseña debe tener al menos 6 caracteres.';
+      case 'too-many-requests': return 'Demasiados intentos. Esperá unos minutos y probá nuevamente.';
+      case 'network-request-failed': return 'No hay conexión con Internet.';
+      case 'user-disabled': return 'Esta cuenta fue deshabilitada.';
+      default: return 'No se pudo completar la operación. Intentá nuevamente.';
+    }
+  }
+
+  void _showMessage(String message, {bool isError = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
+      );
+  }
+
+  void _toggleMode() {
+    FocusScope.of(context).unfocus();
     setState(() {
-      _isSaving = false;
+      _isLogin = !_isLogin;
+      _emailController.clear();
+      _passwordController.clear();
     });
   }
-}
 
-}
-
-Future<void> _deleteCategory(
-String categoryId,
-String categoryName,
-) async {
-final confirmed = await showDialog<bool>(
-context: context,
-builder: (context) {
-return AlertDialog(
-title: const Text('Eliminar categoría'),
-content: Text(
-'¿Querés eliminar la categoría "$categoryName"?',
-),
-actions: [
-TextButton(
-onPressed: () => Navigator.of(context).pop(false),
-child: const Text('Cancelar'),
-),
-FilledButton(
-onPressed: () => Navigator.of(context).pop(true),
-child: const Text('Eliminar'),
-),
-],
-);
-},
-);
-
-if (confirmed != true) {
-  return;
-}
-
-try {
-  await _categories.doc(categoryId).delete();
-
-  if (mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Categoría eliminada'),
+  InputDecoration _inputDecoration({required String label, required IconData icon, Widget? suffixIcon}) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon),
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: Colors.grey.shade50,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Colors.grey.shade200),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.error),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.error, width: 1.5),
       ),
     );
   }
-} catch (e) {
-  if (mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Error al eliminar categoría: $e'),
-      ),
-    );
-  }
-}
 
-}
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-void _showCreateCategoryDialog() {
-_nameController.clear();
-
-showDialog(
-  context: context,
-  builder: (context) {
-    return AlertDialog(
-      title: const Text('Nueva categoría'),
-      content: TextField(
-        controller: _nameController,
-        autofocus: true,
-        decoration: const InputDecoration(
-          labelText: 'Nombre',
-          hintText: 'Ej: Bebidas',
-          border: OutlineInputBorder(),
-        ),
-        textCapitalization: TextCapitalization.sentences,
-      ),
-      actions: [
-        TextButton(
-          onPressed: _isSaving
-              ? null
-              : () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
-        ),
-        FilledButton(
-          onPressed: _isSaving ? null : _createCategory,
-          child: _isSaving
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
+    return Scaffold(
+      backgroundColor: const Color(0xFFF7F8FC),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 900;
+            return SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: isWide ? 48 : 20, vertical: 28),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight - 56),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 480),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 72,
+                          height: 72,
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary,
+                            borderRadius: BorderRadius.circular(22),
+                            boxShadow: [
+                              BoxShadow(
+                                color: colorScheme.primary.withValues(alpha: 0.20),
+                                blurRadius: 24,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 34),
+                        ),
+                        const SizedBox(height: 18),
+                        Text('BizzFlow', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 6),
+                        Text(
+                          _isLogin ? 'Gestioná tu negocio de forma simple' : 'Creá tu cuenta y empezá a organizar tu negocio',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+                        ),
+                        const SizedBox(height: 28),
+                        Card(
+                          elevation: 0,
+                          color: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            side: BorderSide(color: Colors.grey.shade200),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Form(
+                              key: _formKey,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Text(_isLogin ? 'Iniciar sesión' : 'Crear cuenta', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+                                  const SizedBox(height: 20),
+                                  TextFormField(
+                                    controller: _emailController,
+                                    keyboardType: TextInputType.emailAddress,
+                                    textInputAction: TextInputAction.next,
+                                    autofillHints: const [AutofillHints.email],
+                                    decoration: _inputDecoration(label: 'Correo electrónico', icon: Icons.email_outlined),
+                                    validator: (value) {
+                                      final email = value?.trim() ?? '';
+                                      if (email.isEmpty) return 'Ingresá tu correo electrónico.';
+                                      if (!email.contains('@')) return 'Ingresá un correo válido.';
+                                      return null;
+                                    },
+                                  ),
+                                  const SizedBox(height: 14),
+                                  TextFormField(
+                                    controller: _passwordController,
+                                    obscureText: _obscurePassword,
+                                    textInputAction: TextInputAction.done,
+                                    autofillHints: const [AutofillHints.password],
+                                    onFieldSubmitted: (_) { if (!_isLoading) _submit(); },
+                                    decoration: _inputDecoration(
+                                      label: 'Contraseña',
+                                      icon: Icons.lock_outline_rounded,
+                                      suffixIcon: IconButton(
+                                        tooltip: _obscurePassword ? 'Mostrar contraseña' : 'Ocultar contraseña',
+                                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                                        icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                                      ),
+                                    ),
+                                    validator: (value) {
+                                      if ((value ?? '').isEmpty) return 'Ingresá tu contraseña.';
+                                      if (!_isLogin && value!.length < 6) return 'La contraseña debe tener al menos 6 caracteres.';
+                                      return null;
+                                    },
+                                  ),
+                                  if (_isLogin) ...[
+                                    const SizedBox(height: 8),
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: TextButton(onPressed: _isLoading ? null : _resetPassword, child: const Text('¿Olvidaste tu contraseña?')),
+                                    ),
+                                  ],
+                                  const SizedBox(height: 8),
+                                  SizedBox(
+                                    height: 52,
+                                    child: FilledButton(
+                                      onPressed: _isLoading ? null : _submit,
+                                      style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                                      child: _isLoading
+                                          ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+                                          : Text(_isLogin ? 'Iniciar sesión' : 'Crear cuenta', style: const TextStyle(fontWeight: FontWeight.w700)),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 18),
+                                  Row(
+                                    children: [
+                                      Expanded(child: Divider(color: Colors.grey.shade200)),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                                        child: Text('o', style: TextStyle(color: Colors.grey.shade500)),
+                                      ),
+                                      Expanded(child: Divider(color: Colors.grey.shade200)),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  TextButton(
+                                    onPressed: _isLoading ? null : _toggleMode,
+                                    child: Text(_isLogin ? 'Crear una cuenta nueva' : 'Ya tengo una cuenta', style: const TextStyle(fontWeight: FontWeight.w600)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.verified_user_outlined, size: 17, color: Colors.grey.shade500),
+                            const SizedBox(width: 7),
+                            Flexible(
+                              child: Text(
+                                'Tus datos están protegidos con Firebase Authentication',
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade500),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                )
-              : const Text('Crear'),
+                ),
+              ),
+            );
+          },
         ),
-      ],
+      ),
     );
-  },
-);
-
+  }
 }
-
-@override
-void dispose() {
-_nameController.dispose();
-super.dispose();
-}
-
-@override
-Widget build(BuildContext context) {
-return Scaffold(
-appBar: AppBar(
-title: const Text('Categorías'),
-),
-floatingActionButton: FloatingActionButton(
-onPressed: _showCreateCategoryDialog,
-child: const Icon(Icons.add),
-),
-body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-stream: _categories
-.where(
-'businessId',
-isEqualTo: widget.businessId,
-)
-.snapshots(),
-builder: (context, snapshot) {
-if (snapshot.hasError) {
-return Center(
-child: Padding(
-padding: const EdgeInsets.all(24),
-child: Text(
-'Error al cargar categorías:\n${snapshot.error}',
-textAlign: TextAlign.center,
-),
-),
-);
-}
-
-      if (snapshot.connectionState == ConnectionState.waiting) {
-        return const Center(
-          child: CircularProgressIndicator(),
-        );
-      }
-
-      final categories = snapshot.data?.docs ?? [];
-
-      if (categories.isEmpty) {
-        return const Center(
-          child: Padding(
-            padding: EdgeInsets.all(24),
-            child: Text(
-              'Todavía no hay categorías.\n\n'
-              'Tocá el botón + para crear la primera.',
-              textAlign: TextAlign.center,
-            ),
-          ),
-        );
-      }
-
-      return ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: categories.length,
-        separatorBuilder: (_, _) => const SizedBox(height: 8),
-        itemBuilder: (context, index) {
-          final document = categories[index];
-          final data = document.data();
-
-          final name = data['name'] as String? ?? 'Sin nombre';
-
-          return Card(
-            child: ListTile(
-              leading: const CircleAvatar(
-                child: Icon(Icons.category),
-              ),
-              title: Text(name),
-              trailing: IconButton(
-                icon: const Icon(Icons.delete_outline),
-                onPressed: () {
-                  _deleteCategory(
-                    document.id,
-                    name,
-                  );
-                },
-              ),
-            ),
-          );
-        },
-      );
-    },
-  ),
-);
-
-}
-}
-

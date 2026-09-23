@@ -19,7 +19,6 @@ class _CartItem {
   final String unit;
   final double unitPrice;
   double quantity;
-  double availableStock;
 
   _CartItem({
     required this.productId,
@@ -27,14 +26,13 @@ class _CartItem {
     required this.unit,
     required this.unitPrice,
     required this.quantity,
-    required this.availableStock,
   });
 
   double get subtotal => unitPrice * quantity;
 }
 
 class _SalesScreenState extends State<SalesScreen> {
-  final Map<String, _CartItem> _cart = {};
+  final Map<String, _CartItem> _cart = <String, _CartItem>{};
   bool _isSaving = false;
 
   CollectionReference<Map<String, dynamic>> get _productsRef =>
@@ -43,20 +41,27 @@ class _SalesScreenState extends State<SalesScreen> {
   CollectionReference<Map<String, dynamic>> get _salesRef =>
       FirebaseFirestore.instance.collection('sales');
 
-  double get _total {
-    return _cart.values.fold(
-      0,
-      (total, item) => total + item.subtotal,
-    );
+  double get _total => _cart.values.fold<double>(
+        0,
+        (total, item) => total + item.subtotal,
+      );
+
+  double _number(dynamic value) {
+    if (value is num) return value.toDouble();
+    return 0;
+  }
+
+  String _string(dynamic value, String fallback) {
+    final result = value?.toString().trim() ?? '';
+    return result.isEmpty ? fallback : result;
   }
 
   Future<void> _addProductToCart(
     QueryDocumentSnapshot<Map<String, dynamic>> document,
   ) async {
     final data = document.data();
-
-    final name = data['name'] as String? ?? 'Sin nombre';
-    final unit = data['unit'] as String? ?? 'unidad';
+    final name = _string(data['name'], 'Sin nombre');
+    final unit = _string(data['unit'], 'unidad');
     final priceValue = data['price'];
     final stockValue = data['stock'];
 
@@ -81,13 +86,14 @@ class _SalesScreenState extends State<SalesScreen> {
         return;
       }
 
+      if (!mounted) return;
       setState(() {
         existingItem.quantity += 1;
       });
-
       return;
     }
 
+    if (!mounted) return;
     setState(() {
       _cart[document.id] = _CartItem(
         productId: document.id,
@@ -95,12 +101,12 @@ class _SalesScreenState extends State<SalesScreen> {
         unit: unit,
         unitPrice: price,
         quantity: 1,
-        availableStock: stock,
       );
     });
   }
 
   void _removeFromCart(String productId) {
+    if (!mounted) return;
     setState(() {
       _cart.remove(productId);
     });
@@ -114,7 +120,7 @@ class _SalesScreenState extends State<SalesScreen> {
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Confirmar venta'),
           content: Text(
@@ -123,11 +129,11 @@ class _SalesScreenState extends State<SalesScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
+              onPressed: () => Navigator.of(dialogContext).pop(false),
               child: const Text('Cancelar'),
             ),
             FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
               child: const Text('Confirmar'),
             ),
           ],
@@ -135,16 +141,14 @@ class _SalesScreenState extends State<SalesScreen> {
       },
     );
 
-    if (confirmed != true) {
-      return;
-    }
+    if (!mounted || confirmed != true) return;
 
     setState(() {
       _isSaving = true;
     });
 
     try {
-      final cartItems = _cart.values.toList();
+      final cartItems = List<_CartItem>.of(_cart.values);
 
       await FirebaseFirestore.instance.runTransaction(
         (transaction) async {
@@ -170,26 +174,20 @@ class _SalesScreenState extends State<SalesScreen> {
             }
 
             final productData = productSnapshot.data();
-
             if (productData == null) {
               throw Exception(
-                'No se pudieron obtener los datos de '
-                '"${item.productName}".',
+                'No se pudieron obtener los datos de "${item.productName}".',
               );
             }
 
-            final businessId = productData['businessId'];
-
-            if (businessId != widget.businessId) {
+            final productBusinessId = productData['businessId']?.toString();
+            if (productBusinessId != widget.businessId) {
               throw Exception(
-                'El producto "${item.productName}" no pertenece '
-                'a este negocio.',
+                'El producto "${item.productName}" no pertenece a este negocio.',
               );
             }
 
-            final active = productData['active'] != false;
-
-            if (!active) {
+            if (productData['active'] == false) {
               throw Exception(
                 'El producto "${item.productName}" está inactivo.',
               );
@@ -210,21 +208,19 @@ class _SalesScreenState extends State<SalesScreen> {
             if (item.quantity > currentStock) {
               throw Exception(
                 'No hay suficiente stock de "${item.productName}". '
-                'Stock disponible: '
-                '${currentStock.toString()} ${item.unit}.',
+                'Stock disponible: ${_formatStock(currentStock)} ${item.unit}.',
               );
             }
 
             final subtotal = currentPrice * item.quantity;
             final newStock = currentStock - item.quantity;
-
             final productRef = _productsRef.doc(item.productId);
 
-            transaction.update(productRef, {
+            transaction.update(productRef, <String, dynamic>{
               'stock': newStock,
             });
 
-            saleItems.add({
+            saleItems.add(<String, dynamic>{
               'productId': item.productId,
               'productName': item.productName,
               'quantity': item.quantity,
@@ -237,8 +233,7 @@ class _SalesScreenState extends State<SalesScreen> {
           }
 
           final saleRef = _salesRef.doc();
-
-          transaction.set(saleRef, {
+          transaction.set(saleRef, <String, dynamic>{
             'businessId': widget.businessId,
             'items': saleItems,
             'total': saleTotal,
@@ -247,9 +242,7 @@ class _SalesScreenState extends State<SalesScreen> {
         },
       );
 
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
       setState(() {
         _cart.clear();
@@ -257,18 +250,12 @@ class _SalesScreenState extends State<SalesScreen> {
 
       _showMessage('Venta registrada correctamente.');
     } on FirebaseException catch (e) {
-      if (!mounted) {
-        return;
-      }
-
+      if (!mounted) return;
       _showMessage(
         'No se pudo registrar la venta: ${e.message ?? e.code}',
       );
     } catch (e) {
-      if (!mounted) {
-        return;
-      }
-
+      if (!mounted) return;
       _showMessage(
         e.toString().replaceFirst('Exception: ', ''),
       );
@@ -282,9 +269,7 @@ class _SalesScreenState extends State<SalesScreen> {
   }
 
   void _showMessage(String message) {
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -298,19 +283,12 @@ class _SalesScreenState extends State<SalesScreen> {
     if (value == value.roundToDouble()) {
       return value.toInt().toString();
     }
-
     return value.toStringAsFixed(2);
   }
 
   Color _stockColor(double stock) {
-    if (stock <= 0) {
-      return Colors.red;
-    }
-
-    if (stock <= 5) {
-      return Colors.orange;
-    }
-
+    if (stock <= 0) return Colors.red;
+    if (stock <= 5) return Colors.orange;
     return Colors.green;
   }
 
@@ -342,9 +320,7 @@ class _SalesScreenState extends State<SalesScreen> {
             const SizedBox(width: 12),
             const Text(
               'Ventas',
-              style: TextStyle(
-                fontWeight: FontWeight.w800,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w800),
             ),
           ],
         ),
@@ -354,116 +330,29 @@ class _SalesScreenState extends State<SalesScreen> {
           Expanded(
             child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: _productsRef
-                  .where(
-                    'businessId',
-                    isEqualTo: widget.businessId,
-                  )
+                  .where('businessId', isEqualTo: widget.businessId)
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
+                  return const Center(child: CircularProgressIndicator());
                 }
 
                 if (snapshot.hasError) {
-                  return Center(
-                    child: Container(
-                      margin: const EdgeInsets.all(24),
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.error_outline_rounded,
-                            size: 48,
-                            color: theme.colorScheme.error,
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'No se pudieron cargar los productos',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            '${snapshot.error}',
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
+                  return _buildErrorState(theme, snapshot.error.toString());
                 }
 
-                final documents = snapshot.data?.docs.toList() ?? [];
+                final documents = List<QueryDocumentSnapshot<Map<String, dynamic>>>.of(
+                  snapshot.data?.docs ?? <QueryDocumentSnapshot<Map<String, dynamic>>>[],
+                );
 
                 documents.sort((a, b) {
-                  final nameA = a.data()['name'] as String? ?? '';
-                  final nameB = b.data()['name'] as String? ?? '';
-
-                  return nameA
-                      .toLowerCase()
-                      .compareTo(nameB.toLowerCase());
+                  final nameA = _string(a.data()['name'], '');
+                  final nameB = _string(b.data()['name'], '');
+                  return nameA.toLowerCase().compareTo(nameB.toLowerCase());
                 });
 
                 if (documents.isEmpty) {
-                  return Center(
-                    child: Container(
-                      constraints: const BoxConstraints(
-                        maxWidth: 500,
-                      ),
-                      margin: const EdgeInsets.all(24),
-                      padding: const EdgeInsets.all(32),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 76,
-                            height: 76,
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary
-                                  .withValues(alpha: 0.10),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.inventory_2_outlined,
-                              size: 38,
-                              color: theme.colorScheme.primary,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          const Text(
-                            'Todavía no tenés productos',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Creá productos antes de registrar una venta.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
+                  return _buildEmptyState(theme);
                 }
 
                 return LayoutBuilder(
@@ -472,45 +361,27 @@ class _SalesScreenState extends State<SalesScreen> {
 
                     if (isWide) {
                       return GridView.builder(
-                        padding: const EdgeInsets.fromLTRB(
-                          24,
-                          12,
-                          24,
-                          24,
-                        ),
+                        padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
                         gridDelegate:
-                            SliverGridDelegateWithMaxCrossAxisExtent(
+                            const SliverGridDelegateWithMaxCrossAxisExtent(
                           maxCrossAxisExtent: 430,
                           mainAxisExtent: 190,
                           crossAxisSpacing: 16,
                           mainAxisSpacing: 16,
                         ),
                         itemCount: documents.length,
-                        itemBuilder: (context, index) {
-                          return _buildProductCard(
-                            documents[index],
-                            theme,
-                          );
-                        },
+                        itemBuilder: (context, index) =>
+                            _buildProductCard(documents[index], theme),
                       );
                     }
 
                     return ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(
-                        16,
-                        12,
-                        16,
-                        24,
-                      ),
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                       itemCount: documents.length,
-                      separatorBuilder: (_, _) =>
+                      separatorBuilder: (context, index) =>
                           const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        return _buildProductCard(
-                          documents[index],
-                          theme,
-                        );
-                      },
+                      itemBuilder: (context, index) =>
+                          _buildProductCard(documents[index], theme),
                     );
                   },
                 );
@@ -523,28 +394,91 @@ class _SalesScreenState extends State<SalesScreen> {
     );
   }
 
+  Widget _buildErrorState(ThemeData theme, String error) {
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.error_outline_rounded,
+              size: 48,
+              color: theme.colorScheme.error,
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'No se pudieron cargar los productos',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            Text(error, textAlign: TextAlign.center),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(ThemeData theme) {
+    return Center(
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 500),
+        margin: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 76,
+              height: 76,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.10),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.inventory_2_outlined,
+                size: 38,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Todavía no tenés productos',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Creá productos antes de registrar una venta.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildProductCard(
     QueryDocumentSnapshot<Map<String, dynamic>> document,
     ThemeData theme,
   ) {
     final data = document.data();
-
-    final name = data['name'] as String? ?? 'Sin nombre';
-    final category =
-        data['categoryName'] as String? ?? 'Sin categoría';
-    final unit = data['unit'] as String? ?? 'unidad';
-
-    final priceValue = data['price'];
-    final stockValue = data['stock'];
-
-    final price = priceValue is num
-        ? priceValue.toDouble()
-        : 0.0;
-
-    final stock = stockValue is num
-        ? stockValue.toDouble()
-        : 0.0;
-
+    final name = _string(data['name'], 'Sin nombre');
+    final category = _string(data['categoryName'], 'Sin categoría');
+    final unit = _string(data['unit'], 'unidad');
+    final price = _number(data['price']);
+    final stock = _number(data['stock']);
     final active = data['active'] != false;
     final alreadyInCart = _cart.containsKey(document.id);
     final stockColor = _stockColor(stock);
@@ -553,9 +487,7 @@ class _SalesScreenState extends State<SalesScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.black.withValues(alpha: 0.05),
-        ),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -572,8 +504,7 @@ class _SalesScreenState extends State<SalesScreen> {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary
-                    .withValues(alpha: 0.10),
+                color: theme.colorScheme.primary.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(
@@ -584,61 +515,68 @@ class _SalesScreenState extends State<SalesScreen> {
             ),
             const SizedBox(width: 14),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    category,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 13,
-                    ),
-                  ),
-                  const Spacer(),
-                  Row(
-                    children: [
-                      Text(
-                        '\$${price.toStringAsFixed(2)}',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
-                          color: theme.colorScheme.primary,
-                        ),
+              child: SizedBox(
+                height: 154,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
                       ),
-                      const SizedBox(width: 10),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 9,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: stockColor.withValues(alpha: 0.10),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          'Stock: ${_formatStock(stock)} $unit',
-                          style: TextStyle(
-                            color: stockColor,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      category,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                    ),
+                    const Spacer(),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            '\$${price.toStringAsFixed(2)}',
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                              color: theme.colorScheme.primary,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                        const SizedBox(width: 10),
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 9,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: stockColor.withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              'Stock: ${_formatStock(stock)} $unit',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: stockColor,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(width: 12),
@@ -654,9 +592,7 @@ class _SalesScreenState extends State<SalesScreen> {
                       : Icons.add_rounded,
                   size: 18,
                 ),
-                label: Text(
-                  alreadyInCart ? 'Sumar' : 'Agregar',
-                ),
+                label: Text(alreadyInCart ? 'Sumar' : 'Agregar'),
               ),
             ),
           ],
@@ -666,6 +602,8 @@ class _SalesScreenState extends State<SalesScreen> {
   }
 
   Widget _buildCart(ThemeData theme) {
+    final cartHeight = (_cart.length * 58.0 + 150.0).clamp(210.0, 310.0);
+
     return Material(
       elevation: 16,
       color: Colors.white,
@@ -673,17 +611,9 @@ class _SalesScreenState extends State<SalesScreen> {
         top: false,
         child: Container(
           width: double.infinity,
-          constraints: const BoxConstraints(
-            maxHeight: 310,
-          ),
-          padding: const EdgeInsets.fromLTRB(
-            20,
-            16,
-            20,
-            18,
-          ),
+          height: cartHeight,
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 children: [
@@ -691,8 +621,7 @@ class _SalesScreenState extends State<SalesScreen> {
                     width: 42,
                     height: 42,
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary
-                          .withValues(alpha: 0.10),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(13),
                     ),
                     child: Icon(
@@ -704,10 +633,7 @@ class _SalesScreenState extends State<SalesScreen> {
                   const Expanded(
                     child: Text(
                       'Venta actual',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                      ),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
                     ),
                   ),
                   Column(
@@ -734,41 +660,32 @@ class _SalesScreenState extends State<SalesScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              Flexible(
+              const SizedBox(height: 8),
+              Expanded(
                 child: ListView.separated(
-                  shrinkWrap: true,
+                  padding: EdgeInsets.zero,
                   itemCount: _cart.length,
-                  separatorBuilder: (_, _) =>
-                      Divider(
-                        height: 1,
-                        color: Colors.grey.shade200,
-                      ),
+                  separatorBuilder: (context, index) =>
+                      Divider(height: 1, color: Colors.grey.shade200),
                   itemBuilder: (context, index) {
                     final item = _cart.values.elementAt(index);
-
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 8,
-                      ),
+                    return SizedBox(
+                      height: 52,
                       child: Row(
                         children: [
                           Expanded(
                             child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   item.productName,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                                  style: const TextStyle(fontWeight: FontWeight.w700),
                                 ),
-                                const SizedBox(height: 3),
                                 Text(
-                                  '${item.quantity} ${item.unit} × '
+                                  '${_formatStock(item.quantity)} ${item.unit} × '
                                   '\$${item.unitPrice.toStringAsFixed(2)}',
                                   style: TextStyle(
                                     fontSize: 12,
@@ -780,20 +697,14 @@ class _SalesScreenState extends State<SalesScreen> {
                           ),
                           Text(
                             '\$${item.subtotal.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                            ),
+                            style: const TextStyle(fontWeight: FontWeight.w800),
                           ),
                           IconButton(
                             tooltip: 'Quitar',
                             onPressed: _isSaving
                                 ? null
-                                : () => _removeFromCart(
-                                      item.productId,
-                                    ),
-                            icon: const Icon(
-                              Icons.delete_outline_rounded,
-                            ),
+                                : () => _removeFromCart(item.productId),
+                            icon: const Icon(Icons.delete_outline_rounded),
                           ),
                         ],
                       ),
@@ -801,7 +712,7 @@ class _SalesScreenState extends State<SalesScreen> {
                   },
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               SizedBox(
                 width: double.infinity,
                 height: 48,
@@ -811,18 +722,10 @@ class _SalesScreenState extends State<SalesScreen> {
                       ? const SizedBox(
                           width: 19,
                           height: 19,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Icon(
-                          Icons.check_circle_outline_rounded,
-                        ),
-                  label: Text(
-                    _isSaving
-                        ? 'Registrando...'
-                        : 'Confirmar venta',
-                  ),
+                      : const Icon(Icons.check_circle_outline_rounded),
+                  label: Text(_isSaving ? 'Registrando...' : 'Confirmar venta'),
                 ),
               ),
             ],

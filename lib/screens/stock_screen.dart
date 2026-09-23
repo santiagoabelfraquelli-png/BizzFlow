@@ -36,9 +36,7 @@ class _StockScreenState extends State<StockScreen> {
           ),
           title: const Text(
             'Agregar stock',
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
-            ),
+            style: TextStyle(fontWeight: FontWeight.w800),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -57,8 +55,7 @@ class _StockScreenState extends State<StockScreen> {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE8A6B8)
-                            .withValues(alpha: 0.15),
+                        color: const Color(0xFFE8A6B8).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -96,9 +93,7 @@ class _StockScreenState extends State<StockScreen> {
               TextField(
                 controller: controller,
                 autofocus: true,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 decoration: InputDecoration(
                   labelText: 'Cantidad a agregar',
                   hintText: 'Ej: 10',
@@ -112,9 +107,7 @@ class _StockScreenState extends State<StockScreen> {
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(
-                      color: Colors.grey.shade200,
-                    ),
+                    borderSide: BorderSide(color: Colors.grey.shade200),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -143,10 +136,7 @@ class _StockScreenState extends State<StockScreen> {
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFFE8A6B8),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -159,9 +149,7 @@ class _StockScreenState extends State<StockScreen> {
                 if (value == null || value <= 0) {
                   ScaffoldMessenger.of(dialogContext).showSnackBar(
                     const SnackBar(
-                      content: Text(
-                        'Ingresá una cantidad mayor a cero.',
-                      ),
+                      content: Text('Ingresá una cantidad mayor a cero.'),
                     ),
                   );
                   return;
@@ -194,38 +182,28 @@ class _StockScreenState extends State<StockScreen> {
           final snapshot = await transaction.get(productRef);
 
           if (!snapshot.exists) {
-            throw Exception(
-              'El producto "$productName" ya no existe.',
-            );
+            throw Exception('El producto "$productName" ya no existe.');
           }
 
           final data = snapshot.data();
 
           if (data == null) {
-            throw Exception(
-              'No se pudieron obtener los datos del producto.',
-            );
+            throw Exception('No se pudieron obtener los datos del producto.');
           }
 
-          if (data['businessId'] != widget.businessId) {
-            throw Exception(
-              'El producto no pertenece a este negocio.',
-            );
+          if (data['businessId']?.toString() != widget.businessId) {
+            throw Exception('El producto no pertenece a este negocio.');
           }
 
           final stockValue = data['stock'];
 
           if (stockValue is! num) {
-            throw Exception(
-              'El stock actual del producto no es válido.',
-            );
+            throw Exception('El stock actual del producto no es válido.');
           }
 
           final newStock = stockValue.toDouble() + quantity;
 
-          transaction.update(productRef, {
-            'stock': newStock,
-          });
+          transaction.update(productRef, {'stock': newStock});
         },
       );
 
@@ -237,8 +215,7 @@ class _StockScreenState extends State<StockScreen> {
         SnackBar(
           behavior: SnackBarBehavior.floating,
           content: Text(
-            'Se agregaron ${_formatNumber(quantity)} $unit de '
-            '"$productName".',
+            'Se agregaron ${_formatNumber(quantity)} $unit de "$productName".',
           ),
         ),
       );
@@ -251,8 +228,7 @@ class _StockScreenState extends State<StockScreen> {
         SnackBar(
           behavior: SnackBarBehavior.floating,
           content: Text(
-            'No se pudo actualizar el stock: '
-            '${e.message ?? e.code}',
+            'No se pudo actualizar el stock: ${e.message ?? e.code}',
           ),
         ),
       );
@@ -264,9 +240,7 @@ class _StockScreenState extends State<StockScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           behavior: SnackBarBehavior.floating,
-          content: Text(
-            e.toString().replaceFirst('Exception: ', ''),
-          ),
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
         ),
       );
     } finally {
@@ -437,11 +411,8 @@ class _StockScreenState extends State<StockScreen> {
             return Row(
               children: [
                 for (int i = 0; i < cards.length; i++) ...[
-                  Expanded(
-                    child: cards[i],
-                  ),
-                  if (i < cards.length - 1)
-                    const SizedBox(width: 12),
+                  Expanded(child: cards[i]),
+                  if (i < cards.length - 1) const SizedBox(width: 12),
                 ],
               ],
             );
@@ -470,23 +441,12 @@ class _StockScreenState extends State<StockScreen> {
   ) {
     final data = document.data();
 
-    final productName =
-        data['name'] as String? ?? 'Sin nombre';
-
-    final category =
-        data['categoryName'] as String? ?? 'Sin categoría';
-
-    final unit =
-        data['unit'] as String? ?? 'unidad';
-
+    final productName = data['name'] as String? ?? 'Sin nombre';
+    final category = data['categoryName'] as String? ?? 'Sin categoría';
+    final unit = data['unit'] as String? ?? 'unidad';
     final stockValue = data['stock'];
-
-    final stock =
-        stockValue is num ? stockValue.toDouble() : 0.0;
-
-    final isUpdating =
-        _updatingProducts[document.id] == true;
-
+    final stock = stockValue is num ? stockValue.toDouble() : 0.0;
+    final isUpdating = _updatingProducts[document.id] == true;
     final stockColor = _stockColor(stock);
     final stockBackground = _stockBackgroundColor(stock);
 
@@ -494,9 +454,7 @@ class _StockScreenState extends State<StockScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.grey.shade200,
-        ),
+        border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.035),
@@ -567,10 +525,7 @@ class _StockScreenState extends State<StockScreen> {
                 ),
                 const SizedBox(width: 10),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 11,
-                    vertical: 7,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
                   decoration: BoxDecoration(
                     color: stockBackground,
                     borderRadius: BorderRadius.circular(30),
@@ -674,9 +629,7 @@ class _StockScreenState extends State<StockScreen> {
                       const Color(0xFFE8A6B8).withValues(alpha: 0.45),
                   disabledForegroundColor: Colors.white,
                   elevation: 0,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 13,
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 13),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(13),
                   ),
@@ -687,23 +640,13 @@ class _StockScreenState extends State<StockScreen> {
                         height: 18,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(
-                            Colors.white,
-                          ),
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
-                    : const Icon(
-                        Icons.add_circle_outline,
-                        size: 19,
-                      ),
+                    : const Icon(Icons.add_circle_outline, size: 19),
                 label: Text(
-                  isUpdating
-                      ? 'Actualizando...'
-                      : 'Agregar stock',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                  ),
+                  isUpdating ? 'Actualizando...' : 'Agregar stock',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
             ),
@@ -718,16 +661,12 @@ class _StockScreenState extends State<StockScreen> {
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Container(
-          constraints: const BoxConstraints(
-            maxWidth: 460,
-          ),
+          constraints: const BoxConstraints(maxWidth: 460),
           padding: const EdgeInsets.all(32),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: Colors.grey.shade200,
-            ),
+            border: Border.all(color: Colors.grey.shade200),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -736,8 +675,7 @@ class _StockScreenState extends State<StockScreen> {
                 width: 76,
                 height: 76,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8A6B8)
-                      .withValues(alpha: 0.12),
+                  color: const Color(0xFFE8A6B8).withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -757,8 +695,7 @@ class _StockScreenState extends State<StockScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Creá productos para comenzar a administrar '
-                'el stock de tu negocio.',
+                'Creá productos para comenzar a administrar el stock de tu negocio.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.grey.shade600,
@@ -786,10 +723,8 @@ class _StockScreenState extends State<StockScreen> {
         }
 
         const spacing = 14.0;
-
         final itemWidth =
-            (constraints.maxWidth - ((columns - 1) * spacing)) /
-                columns;
+            (constraints.maxWidth - ((columns - 1) * spacing)) / columns;
 
         return Padding(
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 30),
@@ -800,10 +735,7 @@ class _StockScreenState extends State<StockScreen> {
                 .map(
                   (product) => SizedBox(
                     width: itemWidth,
-                    child: _buildProductCard(
-                      context,
-                      product,
-                    ),
+                    child: _buildProductCard(context, product),
                   ),
                 )
                 .toList(),
@@ -825,18 +757,12 @@ class _StockScreenState extends State<StockScreen> {
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: _productsRef
-            .where(
-              'businessId',
-              isEqualTo: widget.businessId,
-            )
+            .where('businessId', isEqualTo: widget.businessId)
             .snapshots(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState ==
-              ConnectionState.waiting) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
-              child: CircularProgressIndicator(
-                color: Color(0xFFE8A6B8),
-              ),
+              child: CircularProgressIndicator(color: Color(0xFFE8A6B8)),
             );
           }
 
@@ -845,16 +771,12 @@ class _StockScreenState extends State<StockScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Container(
-                  constraints: const BoxConstraints(
-                    maxWidth: 500,
-                  ),
+                  constraints: const BoxConstraints(maxWidth: 500),
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Colors.red.shade100,
-                    ),
+                    border: Border.all(color: Colors.red.shade100),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -876,9 +798,7 @@ class _StockScreenState extends State<StockScreen> {
                       Text(
                         '${snapshot.error}',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.grey.shade600,
-                        ),
+                        style: TextStyle(color: Colors.grey.shade600),
                       ),
                     ],
                   ),
@@ -887,43 +807,36 @@ class _StockScreenState extends State<StockScreen> {
             );
           }
 
-          final products =
-              snapshot.data?.docs.toList() ?? [];
+          final products = snapshot.data?.docs.toList() ?? [];
 
           products.sort((a, b) {
-            final nameA =
-                a.data()['name'] as String? ?? '';
-
-            final nameB =
-                b.data()['name'] as String? ?? '';
-
-            return nameA
-                .toLowerCase()
-                .compareTo(nameB.toLowerCase());
+            final nameA = a.data()['name'] as String? ?? '';
+            final nameB = b.data()['name'] as String? ?? '';
+            return nameA.toLowerCase().compareTo(nameB.toLowerCase());
           });
 
           if (products.isEmpty) {
             return Column(
               children: [
                 _buildHeader(),
-                Expanded(
-                  child: _buildEmptyState(),
-                ),
+                Expanded(child: _buildEmptyState()),
               ],
             );
           }
 
-          return Scrollbar(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(),
-                  _buildSummary(products),
-                  _buildProductGrid(products),
-                ],
-              ),
+          // No usamos un Scrollbar manual aquí.
+          // En Flutter Web, un Scrollbar sin un ScrollController/ScrollPosition
+          // asociado puede provocar la excepción mouse_tracker/scrollbar al
+          // usar la rueda del mouse. SingleChildScrollView gestiona su propio
+          // ScrollPosition y evita ese conflicto.
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(),
+                _buildSummary(products),
+                _buildProductGrid(products),
+              ],
             ),
           );
         },
@@ -952,9 +865,7 @@ class _SummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.grey.shade200,
-        ),
+        border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.025),
@@ -972,17 +883,12 @@ class _SummaryCard extends StatelessWidget {
               color: iconColor.withValues(alpha: 0.11),
               borderRadius: BorderRadius.circular(13),
             ),
-            child: Icon(
-              icon,
-              color: iconColor,
-              size: 21,
-            ),
+            child: Icon(icon, color: iconColor, size: 21),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
