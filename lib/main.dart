@@ -12,19 +12,37 @@ import 'services/theme_controller.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
 
-  final appPreferences = AppPreferences.instance;
+    final appPreferences = AppPreferences.instance;
 
-  await ThemeController.instance.load();
+    await ThemeController.instance.load();
 
-  runApp(
-    OrdivoApp(
-      appPreferences: appPreferences,
-    ),
-  );
+    runApp(
+      OrdivoApp(
+        appPreferences: appPreferences,
+      ),
+    );
+  } catch (e, stackTrace) {
+    runApp(
+      MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: SelectableText(
+                'Error al iniciar ORDIVO:\n\n$e\n\n$stackTrace',
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class OrdivoApp extends StatelessWidget {
@@ -43,9 +61,7 @@ class OrdivoApp extends StatelessWidget {
         return MaterialApp(
           title: 'ORDIVO',
           debugShowCheckedModeBanner: false,
-
           themeMode: ThemeController.instance.themeMode,
-
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(
               seedColor: Colors.indigo,
@@ -53,7 +69,6 @@ class OrdivoApp extends StatelessWidget {
             ),
             useMaterial3: true,
           ),
-
           darkTheme: ThemeData(
             colorScheme: ColorScheme.fromSeed(
               seedColor: Colors.indigo,
@@ -61,7 +76,6 @@ class OrdivoApp extends StatelessWidget {
             ),
             useMaterial3: true,
           ),
-
           home: AppRouter(
             appPreferences: appPreferences,
           ),

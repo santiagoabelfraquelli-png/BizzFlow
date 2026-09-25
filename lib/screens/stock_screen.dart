@@ -24,15 +24,10 @@ class _StockScreenState extends State<StockScreen> {
   CollectionReference<Map<String, dynamic>> get _productsRef =>
       FirebaseFirestore.instance.collection('products');
 
-  CollectionReference<Map<String, dynamic>> get _stockMovementsRef =>
-      FirebaseFirestore.instance.collection('stock_movements');
-
   Color _surface(ThemeData theme) => theme.colorScheme.surface;
 
-  Color _card(ThemeData theme) =>
-      theme.colorScheme.surfaceContainerHighest.withValues(
-        alpha: theme.brightness == Brightness.dark ? 0.35 : 0.55,
-      );
+  Color _card(ThemeData theme) => theme.colorScheme.surfaceContainerHighest
+      .withValues(alpha: theme.brightness == Brightness.dark ? 0.35 : 0.55);
 
   Color _muted(ThemeData theme) =>
       theme.colorScheme.onSurface.withValues(alpha: 0.62);
@@ -192,7 +187,6 @@ class _StockScreenState extends State<StockScreen> {
 
     try {
       final productRef = _productsRef.doc(productId);
-      final movementRef = _stockMovementsRef.doc();
 
       await FirebaseFirestore.instance.runTransaction(
         (transaction) async {
@@ -205,39 +199,23 @@ class _StockScreenState extends State<StockScreen> {
           final data = snapshot.data();
 
           if (data == null) {
-            throw Exception(
-              'No se pudieron obtener los datos del producto.',
-            );
+            throw Exception('No se pudieron obtener los datos del producto.');
           }
 
           if (data['businessId']?.toString() != widget.businessId) {
-            throw Exception(
-              'El producto no pertenece a este negocio.',
-            );
+            throw Exception('El producto no pertenece a este negocio.');
           }
 
           final stockValue = data['stock'];
 
           if (stockValue is! num) {
-            throw Exception(
-              'El stock actual del producto no es válido.',
-            );
+            throw Exception('El stock actual del producto no es válido.');
           }
 
           final newStock = stockValue.toDouble() + quantity;
 
           transaction.update(productRef, {
             'stock': newStock,
-          });
-
-          transaction.set(movementRef, {
-            'businessId': widget.businessId,
-            'productId': productId,
-            'type': 'entry',
-            'quantity': quantity,
-            'stockAfter': newStock,
-            'createdAt': FieldValue.serverTimestamp(),
-            'note': 'Entrada manual de stock',
           });
         },
       );
@@ -415,8 +393,7 @@ class _StockScreenState extends State<StockScreen> {
               children: [
                 for (int i = 0; i < cards.length; i++) ...[
                   Expanded(child: cards[i]),
-                  if (i < cards.length - 1)
-                    const SizedBox(width: 12),
+                  if (i < cards.length - 1) const SizedBox(width: 12),
                 ],
               ],
             );
@@ -445,20 +422,17 @@ class _StockScreenState extends State<StockScreen> {
   ) {
     final data = document.data();
 
-    final productName =
-        data['name']?.toString().trim().isNotEmpty == true
-            ? data['name'].toString()
-            : 'Sin nombre';
+    final productName = data['name']?.toString().trim().isNotEmpty == true
+        ? data['name'].toString()
+        : 'Sin nombre';
 
-    final category =
-        data['categoryName']?.toString().trim().isNotEmpty == true
-            ? data['categoryName'].toString()
-            : 'Sin categoría';
+    final category = data['categoryName']?.toString().trim().isNotEmpty == true
+        ? data['categoryName'].toString()
+        : 'Sin categoría';
 
-    final unit =
-        data['unit']?.toString().trim().isNotEmpty == true
-            ? data['unit'].toString()
-            : 'unidad';
+    final unit = data['unit']?.toString().trim().isNotEmpty == true
+        ? data['unit'].toString()
+        : 'unidad';
 
     final stockValue = data['stock'];
     final stock = stockValue is num ? stockValue.toDouble() : 0.0;
@@ -649,9 +623,14 @@ class _StockScreenState extends State<StockScreen> {
                           unit: unit,
                         ),
                 style: FilledButton.styleFrom(
-                  backgroundColor: _pink,
+                  backgroundColor: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF4A2A35)
+                      : _pink,
                   foregroundColor: Colors.white,
-                  disabledBackgroundColor: _pink.withValues(alpha: 0.45),
+                  disabledBackgroundColor: (Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF4A2A35)
+                          : _pink)
+                      .withValues(alpha: 0.45),
                   disabledForegroundColor: Colors.white,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(vertical: 13),
@@ -669,10 +648,7 @@ class _StockScreenState extends State<StockScreen> {
                               AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
-                    : const Icon(
-                        Icons.add_circle_outline,
-                        size: 19,
-                      ),
+                    : const Icon(Icons.add_circle_outline, size: 19),
                 label: Text(
                   isUpdating ? 'Actualizando...' : 'Agregar stock',
                   style: const TextStyle(fontWeight: FontWeight.w700),
@@ -755,7 +731,6 @@ class _StockScreenState extends State<StockScreen> {
         }
 
         const spacing = 14.0;
-
         final itemWidth =
             (constraints.maxWidth - ((columns - 1) * spacing)) / columns;
 
@@ -806,10 +781,7 @@ class _StockScreenState extends State<StockScreen> {
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: _productsRef
-            .where(
-              'businessId',
-              isEqualTo: widget.businessId,
-            )
+            .where('businessId', isEqualTo: widget.businessId)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -852,9 +824,7 @@ class _StockScreenState extends State<StockScreen> {
                       Text(
                         '${snapshot.error}',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: _muted(theme),
-                        ),
+                        style: TextStyle(color: _muted(theme)),
                       ),
                     ],
                   ),
@@ -869,18 +839,14 @@ class _StockScreenState extends State<StockScreen> {
             final nameA = a.data()['name']?.toString() ?? '';
             final nameB = b.data()['name']?.toString() ?? '';
 
-            return nameA.toLowerCase().compareTo(
-                  nameB.toLowerCase(),
-                );
+            return nameA.toLowerCase().compareTo(nameB.toLowerCase());
           });
 
           if (products.isEmpty) {
             return Column(
               children: [
                 _buildHeader(theme),
-                Expanded(
-                  child: _buildEmptyState(theme),
-                ),
+                Expanded(child: _buildEmptyState(theme)),
               ],
             );
           }
@@ -957,9 +923,7 @@ class _SummaryCard extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
-                    color: theme.colorScheme.onSurface.withValues(
-                      alpha: 0.62,
-                    ),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.62),
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),

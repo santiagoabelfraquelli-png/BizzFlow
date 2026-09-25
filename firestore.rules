@@ -3,115 +3,243 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    match /users/{userId} {
-      allow read, write: if request.auth != null
-                         && request.auth.uid == userId;
+    // ---------------------------------------------------------
+    // FUNCIONES DE SEGURIDAD
+    // ---------------------------------------------------------
+
+    function isSignedIn() {
+      return request.auth != null;
     }
+
+    function ownsBusiness(businessId) {
+      return isSignedIn()
+             && exists(
+                  /databases/$(database)/documents/businesses/$(businessId)
+                )
+             && get(
+                  /databases/$(database)/documents/businesses/$(businessId)
+                ).data.ownerId == request.auth.uid;
+    }
+
+    // ---------------------------------------------------------
+    // USUARIOS
+    // ---------------------------------------------------------
+
+    match /users/{userId} {
+
+      allow read: if isSignedIn()
+                  && request.auth.uid == userId;
+
+      allow create, update: if isSignedIn()
+                            && request.auth.uid == userId
+                            && (
+                              !request.resource.data.keys().hasAny(['businessId'])
+                              || ownsBusiness(
+                                   request.resource.data.businessId
+                                 )
+                            );
+    }
+
+    // ---------------------------------------------------------
+    // NEGOCIOS
+    // ---------------------------------------------------------
 
     match /businesses/{businessId} {
-      allow create: if request.auth != null
+
+      allow create: if isSignedIn()
                     && request.resource.data.ownerId == request.auth.uid;
 
-      allow read, update, delete: if request.auth != null
-                                  && resource.data.ownerId == request.auth.uid;
+      allow read: if isSignedIn()
+                  && resource.data.ownerId == request.auth.uid;
+
+      allow update: if isSignedIn()
+                   && resource.data.ownerId == request.auth.uid
+                   && request.resource.data.ownerId == resource.data.ownerId;
+
+      allow delete: if isSignedIn()
+                    && resource.data.ownerId == request.auth.uid;
     }
+
+    // ---------------------------------------------------------
+    // CATEGORÍAS
+    // ---------------------------------------------------------
 
     match /categories/{categoryId} {
-      allow create: if request.auth != null
-                    && request.resource.data.businessId != null
-                    && get(
-                         /databases/$(database)/documents/businesses/$(request.resource.data.businessId)
-                       ).data.ownerId == request.auth.uid;
 
-      allow read, update, delete: if request.auth != null
-                                  && resource.data.businessId != null
-                                  && get(
-                                       /databases/$(database)/documents/businesses/$(resource.data.businessId)
-                                     ).data.ownerId == request.auth.uid;
+      allow create: if ownsBusiness(
+        request.resource.data.businessId
+      );
+
+      allow read: if ownsBusiness(
+        resource.data.businessId
+      );
+
+      allow update: if ownsBusiness(
+        resource.data.businessId
+      )
+      && ownsBusiness(
+        request.resource.data.businessId
+      );
+
+      allow delete: if ownsBusiness(
+        resource.data.businessId
+      );
     }
+
+    // ---------------------------------------------------------
+    // PRODUCTOS
+    // ---------------------------------------------------------
 
     match /products/{productId} {
-      allow create: if request.auth != null
-                    && request.resource.data.businessId != null
-                    && get(
-                         /databases/$(database)/documents/businesses/$(request.resource.data.businessId)
-                       ).data.ownerId == request.auth.uid;
 
-      allow read, update, delete: if request.auth != null
-                                  && resource.data.businessId != null
-                                  && get(
-                                       /databases/$(database)/documents/businesses/$(resource.data.businessId)
-                                     ).data.ownerId == request.auth.uid;
+      allow create: if ownsBusiness(
+        request.resource.data.businessId
+      );
+
+      allow read: if ownsBusiness(
+        resource.data.businessId
+      );
+
+      allow update: if ownsBusiness(
+        resource.data.businessId
+      )
+      && ownsBusiness(
+        request.resource.data.businessId
+      );
+
+      allow delete: if ownsBusiness(
+        resource.data.businessId
+      );
     }
+
+    // ---------------------------------------------------------
+    // VENTAS
+    // ---------------------------------------------------------
 
     match /sales/{saleId} {
-      allow create: if request.auth != null
-                    && request.resource.data.businessId != null
-                    && get(
-                         /databases/$(database)/documents/businesses/$(request.resource.data.businessId)
-                       ).data.ownerId == request.auth.uid;
 
-      allow read, update, delete: if request.auth != null
-                                  && resource.data.businessId != null
-                                  && get(
-                                       /databases/$(database)/documents/businesses/$(resource.data.businessId)
-                                     ).data.ownerId == request.auth.uid;
+      allow create: if ownsBusiness(
+        request.resource.data.businessId
+      );
+
+      allow read: if ownsBusiness(
+        resource.data.businessId
+      );
+
+      allow update: if ownsBusiness(
+        resource.data.businessId
+      )
+      && ownsBusiness(
+        request.resource.data.businessId
+      );
+
+      allow delete: if ownsBusiness(
+        resource.data.businessId
+      );
     }
+
+    // ---------------------------------------------------------
+    // CLIENTES
+    // ---------------------------------------------------------
 
     match /customers/{customerId} {
-      allow create: if request.auth != null
-                    && request.resource.data.businessId != null
-                    && get(
-                         /databases/$(database)/documents/businesses/$(request.resource.data.businessId)
-                       ).data.ownerId == request.auth.uid;
 
-      allow read, update, delete: if request.auth != null
-                                  && resource.data.businessId != null
-                                  && get(
-                                       /databases/$(database)/documents/businesses/$(resource.data.businessId)
-                                     ).data.ownerId == request.auth.uid;
+      allow create: if ownsBusiness(
+        request.resource.data.businessId
+      );
+
+      allow read: if ownsBusiness(
+        resource.data.businessId
+      );
+
+      allow update: if ownsBusiness(
+        resource.data.businessId
+      )
+      && ownsBusiness(
+        request.resource.data.businessId
+      );
+
+      allow delete: if ownsBusiness(
+        resource.data.businessId
+      );
     }
+
+    // ---------------------------------------------------------
+    // GASTOS
+    // ---------------------------------------------------------
 
     match /expenses/{expenseId} {
-      allow create: if request.auth != null
-                    && request.resource.data.businessId != null
-                    && get(
-                         /databases/$(database)/documents/businesses/$(request.resource.data.businessId)
-                       ).data.ownerId == request.auth.uid;
 
-      allow read, update, delete: if request.auth != null
-                                  && resource.data.businessId != null
-                                  && get(
-                                       /databases/$(database)/documents/businesses/$(resource.data.businessId)
-                                     ).data.ownerId == request.auth.uid;
+      allow create: if ownsBusiness(
+        request.resource.data.businessId
+      );
+
+      allow read: if ownsBusiness(
+        resource.data.businessId
+      );
+
+      allow update: if ownsBusiness(
+        resource.data.businessId
+      )
+      && ownsBusiness(
+        request.resource.data.businessId
+      );
+
+      allow delete: if ownsBusiness(
+        resource.data.businessId
+      );
     }
+
+    // ---------------------------------------------------------
+    // MOVIMIENTOS DE CAJA
+    // ---------------------------------------------------------
 
     match /cash_movements/{movementId} {
-      allow create: if request.auth != null
-                    && request.resource.data.businessId != null
-                    && get(
-                         /databases/$(database)/documents/businesses/$(request.resource.data.businessId)
-                       ).data.ownerId == request.auth.uid;
 
-      allow read, update, delete: if request.auth != null
-                                  && resource.data.businessId != null
-                                  && get(
-                                       /databases/$(database)/documents/businesses/$(resource.data.businessId)
-                                     ).data.ownerId == request.auth.uid;
+      allow create: if ownsBusiness(
+        request.resource.data.businessId
+      );
+
+      allow read: if ownsBusiness(
+        resource.data.businessId
+      );
+
+      allow update: if ownsBusiness(
+        resource.data.businessId
+      )
+      && ownsBusiness(
+        request.resource.data.businessId
+      );
+
+      allow delete: if ownsBusiness(
+        resource.data.businessId
+      );
     }
 
-    match /stock_movements/{movementId} {
-      allow create: if request.auth != null
-                    && request.resource.data.businessId != null
-                    && get(
-                         /databases/$(database)/documents/businesses/$(request.resource.data.businessId)
-                       ).data.ownerId == request.auth.uid;
+    // ---------------------------------------------------------
+    // MOVIMIENTOS DE STOCK
+    // ---------------------------------------------------------
 
-     allow read, delete: if request.auth != null
-                     && resource.data.businessId != null
-                     && get(
-                          /databases/$(database)/documents/businesses/$(resource.data.businessId)
-                        ).data.ownerId == request.auth.uid;
+    match /stock_movements/{movementId} {
+
+      allow create: if ownsBusiness(
+        request.resource.data.businessId
+      );
+
+      allow read: if ownsBusiness(
+        resource.data.businessId
+      );
+
+      allow update: if ownsBusiness(
+        resource.data.businessId
+      )
+      && ownsBusiness(
+        request.resource.data.businessId
+      );
+
+      allow delete: if ownsBusiness(
+        resource.data.businessId
+      );
     }
   }
 }

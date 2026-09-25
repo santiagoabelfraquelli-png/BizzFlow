@@ -3,9 +3,9 @@
     "short_name": "ORDIVO",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#FFF8FA",
+    "theme_color": "#E8A6B8",
+    "description": "ORDIVO - Tu negocio, en orden.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
