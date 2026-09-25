@@ -1,7 +1,8 @@
 {
     "name": "ORDIVO",
     "short_name": "ORDIVO",
-    "start_url": ".",
+    "start_url": "/",
+    "scope": "/",
     "display": "standalone",
     "background_color": "#FFF8FA",
     "theme_color": "#E8A6B8",

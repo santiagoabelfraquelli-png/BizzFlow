@@ -1,31 +1,4 @@
 {
-  "flutter": {
-    "platforms": {
-      "android": {
-        "default": {
-          "projectId": "bizzflow-f99c0",
-          "appId": "1:693280855291:android:a7161806e250b0ba460c5e",
-          "fileOutput": "android/app/google-services.json"
-        }
-      },
-      "dart": {
-        "lib/firebase_options.dart": {
-          "projectId": "bizzflow-f99c0",
-          "configurations": {
-            "android": "1:693280855291:android:a7161806e250b0ba460c5e",
-            "ios": "1:693280855291:ios:9c1e8f88564dc46a460c5e",
-            "macos": "1:693280855291:ios:9c1e8f88564dc46a460c5e",
-            "web": "1:693280855291:web:704e6a8df8119f05460c5e",
-            "windows": "1:693280855291:web:5e2765d8f1c0f0e6460c5e"
-          }
-        }
-      }
-    }
-  },
-  "firestore": {
-    "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
-  },
   "hosting": {
     "public": "build/web",
     "ignore": [
@@ -33,9 +6,29 @@
       "**/.*",
       "**/node_modules/**"
     ],
-    "rewrites": [
+    "headers": [
       {
         "source": "**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "max-age=0, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "404.html",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "max-age=0, must-revalidate"
+          }
+        ]
+      }
+    ],
+    "rewrites": [
+      {
+        "source": "!(/assets/**|/canvaskit/**|/icons/**|/main.dart.*)",
         "destination": "/index.html"
       }
     ]
